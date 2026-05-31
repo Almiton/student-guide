@@ -193,20 +193,24 @@ class _CampusCard extends StatelessWidget {
       key: Key('${campus.name}_expanded_$shouldExpand'),
       child: ExpansionTile(
         initiallyExpanded: shouldExpand,
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(Icons.account_balance, color: theme.colorScheme.primary),
-        ),
-        title: Text(
-          campus.name,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.3,
-          ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.account_balance,
+              color: theme.colorScheme.primary,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                campus.name,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+          ],
         ),
         subtitle: InteractiveFeedback(
           borderRadius: BorderRadius.circular(8),
@@ -221,16 +225,18 @@ class _CampusCard extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.location_on_outlined,
-                    size: 18,
+                    size: 20,
                     color: theme.colorScheme.secondary,
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       campus.address,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.secondary,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

@@ -188,6 +188,68 @@ class AppUtils {
     }
     return '$count мест';
   }
+
+  /// Сопоставляет факультет по полному названию или аббревиатуре.
+  static bool matchFaculty(String facultyName, String query) {
+    final cleanQuery = query.toLowerCase().trim();
+    if (cleanQuery.isEmpty) return false;
+    
+    final cleanFaculty = facultyName.toLowerCase();
+    if (cleanFaculty.contains(cleanQuery)) return true;
+
+    // База сокращений
+    final abbreviations = {
+      'фкн': ['факультет компьютерных наук', 'компьютерных наук', 'фкн'],
+      'пмм': ['прикладной математики', 'пмм', 'прикладной математики, информатики и механики'],
+      'ргф': ['романс-германской', 'романо-германской', 'ргф', 'романс-германской филологии', 'романо-германской филологии'],
+      'фмо': ['международных отношений', 'фмо'],
+      'ггит': ['географии', 'географии и туризма', 'ггит', 'географии, геоэкологии и туризма'],
+      'физфак': ['физический', 'физфак'],
+      'химфак': ['химический', 'химфак'],
+      'истфак': ['исторический', 'истфак'],
+      'юрфак': ['юридический', 'юрфак'],
+      'журфак': ['журналистики', 'журфак'],
+      'филфак': ['филологический', 'филфак'],
+      'матфак': ['математический', 'матфак'],
+      'биофак': ['медико-биологический', 'биофак'],
+    };
+
+    for (final entry in abbreviations.entries) {
+      if (cleanQuery == entry.key) {
+        for (final val in entry.value) {
+          if (cleanFaculty.contains(val)) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /// Сопоставляет кафедру по названию или аббревиатуре.
+  static bool matchDepartment(String departmentName, String query) {
+    final cleanQuery = query.toLowerCase().trim();
+    if (cleanQuery.isEmpty) return false;
+
+    final cleanDept = departmentName.toLowerCase();
+    if (cleanDept.contains(cleanQuery)) return true;
+
+    // База сокращений кафедр
+    final deptAbbr = {
+      'сау': ['системного анализа и управления', 'сау'],
+      'пит': ['программирования и информационных технологий', 'пит'],
+      'поаис': ['программного обеспечения и администрирования информационных систем', 'поаис'],
+      'ист': ['информационных систем и технологий', 'ист'],
+      'вм': ['вычислительной математики', 'вм'],
+    };
+
+    for (final entry in deptAbbr.entries) {
+      if (cleanQuery == entry.key) {
+        for (final val in entry.value) {
+          if (cleanDept.contains(val)) return true;
+        }
+      }
+    }
+    return false;
+  }
 }
 
 class InteractiveFeedback extends StatefulWidget {

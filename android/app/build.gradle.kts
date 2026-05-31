@@ -32,6 +32,17 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    applicationVariants.all {
+        val variant = this
+        variant.outputs.forEach { output ->
+            val apkOutput = output as? com.android.build.gradle.internal.api.ApkVariantOutputImpl
+            if (apkOutput != null) {
+                val abi = apkOutput.filters.find { it.filterType == "ABI" }?.identifier ?: "universal"
+                apkOutput.outputFileName = "student_guide_v${variant.versionName}_${abi}.apk"
+            }
+        }
+    }
 }
 
 kotlin {
