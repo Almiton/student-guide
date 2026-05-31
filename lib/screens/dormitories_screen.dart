@@ -125,7 +125,10 @@ class _DormitoriesScreenState extends State<DormitoriesScreen> {
                   itemCount: filteredDormitories.length,
                   itemBuilder: (context, index) {
                     final dormitory = filteredDormitories[index];
-                    return _DormitoryCard(dormitory: dormitory);
+                    return _DormitoryCard(
+                      dormitory: dormitory,
+                      searchQuery: _searchQuery,
+                    );
                   },
                 ),
         ),
@@ -136,8 +139,12 @@ class _DormitoriesScreenState extends State<DormitoriesScreen> {
 
 class _DormitoryCard extends StatefulWidget {
   final Dormitory dormitory;
+  final String searchQuery;
 
-  const _DormitoryCard({required this.dormitory});
+  const _DormitoryCard({
+    required this.dormitory,
+    required this.searchQuery,
+  });
 
   @override
   State<_DormitoryCard> createState() => _DormitoryCardState();
@@ -177,6 +184,12 @@ class _DormitoryCardState extends State<_DormitoryCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dormitory = widget.dormitory;
+    final query = widget.searchQuery.toLowerCase().trim();
+    final bool shouldExpand = query.isNotEmpty && dormitory.facultySpots != null &&
+        dormitory.facultySpots!.keys.any((key) =>
+            AppUtils.matchFaculty(key, query) ||
+            key.toLowerCase().contains(query));
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       clipBehavior: Clip.antiAlias,
@@ -344,7 +357,8 @@ class _DormitoryCardState extends State<_DormitoryCard> {
             ),
           ),
           ExpansionTile(
-            key: PageStorageKey('details_${dormitory.name}'),
+            key: Key('${dormitory.name}_expanded_$shouldExpand'),
+            initiallyExpanded: shouldExpand,
             title: Text(
               'Места и стоимость',
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -408,45 +422,10 @@ class _DormitoryCardState extends State<_DormitoryCard> {
                           return b.value.compareTo(a.value);
                         });
                         return sortedEntries.map((entry) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    entry.key
-                                        .replaceAll(
-                                          RegExp(r'\s*\(.*?\)\s*'),
-                                          '',
-                                        )
-                                        .trim(),
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.secondary
-                                        .withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    AppUtils.getPluralSpots(entry.value),
-                                    style: TextStyle(
-                                      color: theme.colorScheme.secondary,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                          return _DormitoryFacultyRow(
+                            facultyName: entry.key,
+                            spots: entry.value,
+                            searchQuery: widget.searchQuery,
                           );
                         });
                       })(),
@@ -566,3 +545,138 @@ class _DormitoryCardState extends State<_DormitoryCard> {
     );
   }
 }
+
+class _DormitoryFacultyRow extends StatefulWidget {
+  final String facultyName;
+  final int spots;
+  final String searchQuery;
+
+  const _DormitoryFacultyRow({
+    required this.facultyName,
+    required this.spots,
+    required this.searchQuery,
+  });
+
+  @override
+  State<_DormitoryFacultyRow> createState() => _DormitoryFacultyRowState();
+}
+
+class _DormitoryFacultyRowState extends State<_DormitoryFacultyRow> {
+  bool _isHighlighted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final query = widget.searchQuery.toLowerCase().trim();
+    if (query.isNotEmpty && _checkMatch(query)) {
+      _triggerHighlight();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _DormitoryFacultyRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldQuery = oldWidget.searchQuery.toLowerCase().trim();
+    final newQuery = widget.searchQuery.toLowerCase().trim();
+    if (newQuery.isNotEmpty && newQuery != oldQuery && _checkMatch(newQuery)) {
+      _triggerHighlight();
+    }
+  }
+
+  bool _checkMatch(String query) {
+    return AppUtils.matchFaculty(widget.facultyName, query) ||
+        widget.facultyName.toLowerCase().contains(query);
+  }
+
+  void _triggerHighlight() {
+    setState(() {
+      _isHighlighted = true;
+    });
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _isHighlighted = false;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final Color facColor = AppUtils.getFacultyColor(widget.facultyName);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: _isHighlighted
+            ? facColor.withOpacity(0.08)
+            : theme.colorScheme.surface.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: _isHighlighted
+              ? facColor
+              : theme.colorScheme.onSurface.withOpacity(0.08),
+          width: _isHighlighted ? 1.5 : 1.0,
+        ),
+        boxShadow: _isHighlighted
+            ? [
+                BoxShadow(
+                  color: facColor.withOpacity(0.25),
+                  blurRadius: 6,
+                  spreadRadius: 1,
+                )
+              ]
+            : [],
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.school_outlined,
+            color: _isHighlighted ? facColor : theme.colorScheme.primary,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              widget.facultyName
+                  .replaceAll(
+                    RegExp(r'\s*\(.*?\)\s*'),
+                    '',
+                  )
+                  .trim(),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 2.5,
+            ),
+            decoration: BoxDecoration(
+              color: _isHighlighted 
+                  ? facColor.withOpacity(0.2) 
+                  : theme.colorScheme.secondary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              AppUtils.getPluralSpots(widget.spots),
+              style: TextStyle(
+                color: _isHighlighted ? facColor : theme.colorScheme.secondary,
+                fontSize: 11.5,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

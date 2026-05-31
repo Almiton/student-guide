@@ -179,48 +179,22 @@ class _ScoresScreenState extends State<ScoresScreen>
 
       final matchesFaculty = faculty == 'Все' || score.facultyName == faculty;
 
-      bool matchesSubjects = true;
-      for (final selectedSubj in _selectedSubjects) {
-        bool specContainsSelected = false;
-        for (final specSubj in score.subjects) {
-          if (specSubj.contains('/')) {
-            final options = specSubj.split('/');
-            for (final opt in options) {
-              if (opt.trim().toLowerCase() ==
-                  selectedSubj.trim().toLowerCase()) {
-                specContainsSelected = true;
-                break;
-              }
-            }
-          } else {
-            if (specSubj.trim().toLowerCase() ==
-                selectedSubj.trim().toLowerCase()) {
-              specContainsSelected = true;
-            }
-          }
-          if (specContainsSelected) break;
-        }
-        if (!specContainsSelected) {
-          matchesSubjects = false;
-          break;
-        }
-      }
-
-      bool matchesScores = true;
-      if (_userScores.isNotEmpty) {
+      bool matchesCalculator = true;
+      if (_selectedSubjects.length >= 3) {
         final userTotal = _calculateUserTotalForDirection(score);
-        if (userTotal != null) {
+        if (userTotal == null) {
+          matchesCalculator = false;
+        } else {
           final target = score.passingScores[2025] ?? 0;
           if (target > 0 && userTotal < target) {
-            matchesScores = false;
+            matchesCalculator = false;
           }
         }
       }
 
       return matchesSearch &&
           matchesFaculty &&
-          matchesSubjects &&
-          matchesScores;
+          matchesCalculator;
     }).length;
   }
 
@@ -556,49 +530,22 @@ class _ScoresScreenState extends State<ScoresScreen>
       final matchesFaculty =
           _selectedFaculty == 'Все' || score.facultyName == _selectedFaculty;
 
-      bool matchesSubjects = true;
-      for (final selectedSubj in _selectedSubjects) {
-        bool specContainsSelected = false;
-        for (final specSubj in score.subjects) {
-          if (specSubj.contains('/')) {
-            final options = specSubj.split('/');
-            for (final opt in options) {
-              if (opt.trim().toLowerCase() ==
-                  selectedSubj.trim().toLowerCase()) {
-                specContainsSelected = true;
-                break;
-              }
-            }
-          } else {
-            if (specSubj.trim().toLowerCase() ==
-                selectedSubj.trim().toLowerCase()) {
-              specContainsSelected = true;
-            }
-          }
-          if (specContainsSelected) break;
-        }
-        if (!specContainsSelected) {
-          matchesSubjects = false;
-          break;
-        }
-      }
-
-      // 2. Фильтр по баллам
-      bool matchesScores = true;
-      if (_userScores.isNotEmpty) {
+      bool matchesCalculator = true;
+      if (_selectedSubjects.length >= 3) {
         final userTotal = _calculateUserTotalForDirection(score);
-        if (userTotal != null) {
+        if (userTotal == null) {
+          matchesCalculator = false;
+        } else {
           final target = score.passingScores[2025] ?? 0;
           if (target > 0 && userTotal < target) {
-            matchesScores = false;
+            matchesCalculator = false;
           }
         }
       }
 
       return matchesSearch &&
           matchesFaculty &&
-          matchesSubjects &&
-          matchesScores;
+          matchesCalculator;
     }).toList();
 
     // Apply sorting logic
@@ -799,11 +746,36 @@ class _ScoresScreenState extends State<ScoresScreen>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Калькулятор баллов ЕГЭ',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                            Row(
+                              children: [
+                                Text(
+                                  'Калькулятор баллов ЕГЭ',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                (() {
+                                  final calculatorTotal = _userScores.values.fold(0, (sum, val) => sum + val) + _extraAchievementsScore;
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      '$calculatorTotal баллов',
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                    ),
+                                  );
+                                })(),
+                              ],
                             ),
                             Padding(
                               padding: const EdgeInsets.all(8.0),

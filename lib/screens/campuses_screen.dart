@@ -181,15 +181,31 @@ class _CampusCard extends StatelessWidget {
     // Проверяем совпадение по факультетам или кафедрам для авто-развертывания
     final bool hasFacultyMatch = query.isNotEmpty && campus.faculties.any((faculty) =>
         faculty.name.toLowerCase().contains(query) ||
-        faculty.description.toLowerCase().contains(query));
+        faculty.description.toLowerCase().contains(query) ||
+        AppUtils.matchFaculty(faculty.name, query));
 
     final bool hasDeptMatch = query.isNotEmpty && campus.faculties.any((faculty) =>
         faculty.departments.any((dept) =>
             dept.name.toLowerCase().contains(query) ||
             (dept.description != null && dept.description!.toLowerCase().contains(query)) ||
-            (dept.head != null && dept.head!.toLowerCase().contains(query))));
+            (dept.head != null && dept.head!.toLowerCase().contains(query)) ||
+            AppUtils.matchDepartment(dept.name, query)));
 
-    final bool shouldExpand = hasFacultyMatch || hasDeptMatch;
+    final bool hasStructureMatch = query.isNotEmpty && campus.structures != null &&
+        campus.structures!.any((struct) => struct.toLowerCase().contains(query));
+
+    final bool hasMuseumMatch = query.isNotEmpty && campus.museums != null &&
+        campus.museums!.any((mus) => mus.toLowerCase().contains(query));
+
+    final bool hasInfoMatch = query.isNotEmpty && campus.extraInfo != null &&
+        campus.extraInfo!.any((info) => info.toLowerCase().contains(query));
+
+    final bool hasContactMatch = query.isNotEmpty && campus.extraContacts != null &&
+        campus.extraContacts!.entries.any((entry) =>
+            entry.key.toLowerCase().contains(query) ||
+            entry.value.toLowerCase().contains(query));
+
+    final bool shouldExpand = hasFacultyMatch || hasDeptMatch || hasStructureMatch || hasMuseumMatch || hasInfoMatch || hasContactMatch;
 
     return Card(
       key: Key('${campus.name}_expanded_$shouldExpand'),
@@ -287,6 +303,7 @@ class _CampusCard extends StatelessWidget {
                 text: structure,
                 icon: Icons.circle,
                 iconSize: 6,
+                searchQuery: searchQuery,
               ),
             ),
           ],
@@ -304,6 +321,7 @@ class _CampusCard extends StatelessWidget {
                 text: museum,
                 icon: Icons.museum_outlined,
                 iconSize: 14,
+                searchQuery: searchQuery,
               ),
             ),
           ],
@@ -322,6 +340,7 @@ class _CampusCard extends StatelessWidget {
                 text: info,
                 icon: Icons.info_outline,
                 iconSize: 14,
+                searchQuery: searchQuery,
               ),
             ),
           ],
@@ -340,6 +359,7 @@ class _CampusCard extends StatelessWidget {
               (entry) => _ContactListItem(
                 name: entry.key,
                 value: entry.value,
+                searchQuery: searchQuery,
               ),
             ),
           ],
@@ -349,7 +369,7 @@ class _CampusCard extends StatelessWidget {
   }
 }
 
-class _FacultyTile extends StatelessWidget {
+class _FacultyTile extends StatefulWidget {
   final Faculty faculty;
   final String searchQuery;
 
@@ -359,83 +379,214 @@ class _FacultyTile extends StatelessWidget {
   });
 
   @override
+  State<_FacultyTile> createState() => _FacultyTileState();
+}
+
+class _FacultyTileState extends State<_FacultyTile> {
+  bool _isHighlighted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final query = widget.searchQuery.toLowerCase().trim();
+    if (query.isNotEmpty && _checkMatch(query)) {
+      _triggerHighlight();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _FacultyTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldQuery = oldWidget.searchQuery.toLowerCase().trim();
+    final newQuery = widget.searchQuery.toLowerCase().trim();
+    if (newQuery.isNotEmpty && newQuery != oldQuery && _checkMatch(newQuery)) {
+      _triggerHighlight();
+    }
+  }
+
+  bool _checkMatch(String query) {
+    return widget.faculty.name.toLowerCase().contains(query) ||
+        widget.faculty.description.toLowerCase().contains(query) ||
+        AppUtils.matchFaculty(widget.faculty.name, query);
+  }
+
+  void _triggerHighlight() {
+    setState(() {
+      _isHighlighted = true;
+    });
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _isHighlighted = false;
+        });
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final query = searchQuery.toLowerCase().trim();
+    final query = widget.searchQuery.toLowerCase().trim();
 
     // Проверяем совпадение по кафедрам для авто-развертывания факультета
-    final bool shouldExpand = query.isNotEmpty && faculty.departments.any((dept) =>
+    final bool shouldExpand = query.isNotEmpty && widget.faculty.departments.any((dept) =>
         dept.name.toLowerCase().contains(query) ||
         (dept.description != null && dept.description!.toLowerCase().contains(query)) ||
-        (dept.head != null && dept.head!.toLowerCase().contains(query)));
+        (dept.head != null && dept.head!.toLowerCase().contains(query)) ||
+        AppUtils.matchDepartment(dept.name, query));
 
-    return Card(
-      elevation: 0,
-      color: theme.colorScheme.surface.withValues(alpha: 0.5),
-      shape: RoundedRectangleBorder(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
-        ),
+        boxShadow: _isHighlighted
+            ? [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.35),
+                  blurRadius: 8,
+                  spreadRadius: 2,
+                )
+              ]
+            : [],
       ),
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      key: Key('${faculty.name}_expanded_$shouldExpand'),
-      child: ExpansionTile(
-        initiallyExpanded: shouldExpand,
-        title: Text(
-          faculty.name,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
+      child: Card(
+        elevation: 0,
+        color: theme.colorScheme.surface.withValues(alpha: 0.5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: _isHighlighted
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurface.withValues(alpha: 0.05),
+            width: _isHighlighted ? 2.0 : 1.0,
           ),
         ),
-        iconColor: theme.colorScheme.secondary,
-        collapsedIconColor: theme.textTheme.bodyMedium?.color?.withValues(
-          alpha: 0.6,
-        ),
-        childrenPadding: const EdgeInsets.all(12),
-        children: [
-          Text(
-            faculty.description,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
-              height: 1.4,
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        key: Key('${widget.faculty.name}_expanded_$shouldExpand'),
+        child: ExpansionTile(
+          initiallyExpanded: shouldExpand,
+          title: Text(
+            widget.faculty.name,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: 12),
-          Divider(color: theme.dividerColor),
-          const SizedBox(height: 8),
-          Container(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Кафедры:',
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-                letterSpacing: 0.5,
+          iconColor: theme.colorScheme.secondary,
+          collapsedIconColor: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+          childrenPadding: const EdgeInsets.all(12),
+          children: [
+            Text(
+              widget.faculty.description,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                height: 1.4,
               ),
             ),
-          ),
-          const SizedBox(height: 6),
-          ...faculty.departments.map(
-            (dept) => _DepartmentItem(department: dept),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Divider(color: theme.dividerColor),
+            const SizedBox(height: 8),
+            Container(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Кафедры:',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            ...widget.faculty.departments.map(
+              (dept) => _DepartmentItem(
+                department: dept,
+                searchQuery: widget.searchQuery,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _DepartmentItem extends StatelessWidget {
+class _DepartmentItem extends StatefulWidget {
   final Department department;
+  final String searchQuery;
 
-  const _DepartmentItem({required this.department});
+  const _DepartmentItem({
+    required this.department,
+    required this.searchQuery,
+  });
+
+  @override
+  State<_DepartmentItem> createState() => _DepartmentItemState();
+}
+
+class _DepartmentItemState extends State<_DepartmentItem> {
+  bool _isHighlighted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final query = widget.searchQuery.toLowerCase().trim();
+    if (query.isNotEmpty && _checkMatch(query)) {
+      _triggerHighlight();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _DepartmentItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldQuery = oldWidget.searchQuery.toLowerCase().trim();
+    final newQuery = widget.searchQuery.toLowerCase().trim();
+    if (newQuery.isNotEmpty && newQuery != oldQuery && _checkMatch(newQuery)) {
+      _triggerHighlight();
+    }
+  }
+
+  bool _checkMatch(String query) {
+    return widget.department.name.toLowerCase().contains(query) ||
+        (widget.department.description != null &&
+            widget.department.description!.toLowerCase().contains(query)) ||
+        (widget.department.head != null &&
+            widget.department.head!.toLowerCase().contains(query)) ||
+        AppUtils.matchDepartment(widget.department.name, query);
+  }
+
+  void _triggerHighlight() {
+    setState(() {
+      _isHighlighted = true;
+    });
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _isHighlighted = false;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: _isHighlighted
+            ? theme.colorScheme.primary.withValues(alpha: 0.08)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: _isHighlighted
+              ? theme.colorScheme.primary
+              : Colors.transparent,
+          width: 1.5,
+        ),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -454,22 +605,22 @@ class _DepartmentItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  department.name,
+                  widget.department.name,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: theme.colorScheme.onSurface,
                   ),
                 ),
-                if (department.description != null) ...[
+                if (widget.department.description != null) ...[
                   const SizedBox(height: 2),
                   Text(
-                    department.description!,
+                    widget.department.description!,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.textTheme.bodySmall?.color,
                     ),
                   ),
                 ],
-                if (department.head != null) ...[
+                if (widget.department.head != null) ...[
                   const SizedBox(height: 4),
                   Row(
                     children: [
@@ -480,7 +631,7 @@ class _DepartmentItem extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Зав. кафедрой: ${department.head!}',
+                        'Зав. кафедрой: ${widget.department.head!}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.w500,
@@ -529,33 +680,92 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _InfoListItem extends StatelessWidget {
+class _InfoListItem extends StatefulWidget {
   final String text;
   final IconData icon;
   final double iconSize;
+  final String searchQuery;
 
   const _InfoListItem({
     required this.text,
     required this.icon,
     required this.iconSize,
+    required this.searchQuery,
   });
+
+  @override
+  State<_InfoListItem> createState() => _InfoListItemState();
+}
+
+class _InfoListItemState extends State<_InfoListItem> {
+  bool _isHighlighted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final query = widget.searchQuery.toLowerCase().trim();
+    if (query.isNotEmpty && _checkMatch(query)) {
+      _triggerHighlight();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _InfoListItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldQuery = oldWidget.searchQuery.toLowerCase().trim();
+    final newQuery = widget.searchQuery.toLowerCase().trim();
+    if (newQuery.isNotEmpty && newQuery != oldQuery && _checkMatch(newQuery)) {
+      _triggerHighlight();
+    }
+  }
+
+  bool _checkMatch(String query) {
+    return widget.text.toLowerCase().contains(query);
+  }
+
+  void _triggerHighlight() {
+    setState(() {
+      _isHighlighted = true;
+    });
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _isHighlighted = false;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: const EdgeInsets.all(8),
+      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+      decoration: BoxDecoration(
+        color: _isHighlighted
+            ? theme.colorScheme.primary.withValues(alpha: 0.08)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: _isHighlighted
+              ? theme.colorScheme.primary
+              : Colors.transparent,
+          width: 1.5,
+        ),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 5.0),
-            child: Icon(icon, size: iconSize, color: theme.colorScheme.secondary),
+            child: Icon(widget.icon, size: widget.iconSize, color: theme.colorScheme.secondary),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              text,
+              widget.text,
               style: theme.textTheme.bodyMedium?.copyWith(
                 height: 1.3,
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
@@ -568,11 +778,60 @@ class _InfoListItem extends StatelessWidget {
   }
 }
 
-class _ContactListItem extends StatelessWidget {
+class _ContactListItem extends StatefulWidget {
   final String name;
   final String value;
+  final String searchQuery;
 
-  const _ContactListItem({required this.name, required this.value});
+  const _ContactListItem({
+    required this.name,
+    required this.value,
+    required this.searchQuery,
+  });
+
+  @override
+  State<_ContactListItem> createState() => _ContactListItemState();
+}
+
+class _ContactListItemState extends State<_ContactListItem> {
+  bool _isHighlighted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final query = widget.searchQuery.toLowerCase().trim();
+    if (query.isNotEmpty && _checkMatch(query)) {
+      _triggerHighlight();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _ContactListItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldQuery = oldWidget.searchQuery.toLowerCase().trim();
+    final newQuery = widget.searchQuery.toLowerCase().trim();
+    if (newQuery.isNotEmpty && newQuery != oldQuery && _checkMatch(newQuery)) {
+      _triggerHighlight();
+    }
+  }
+
+  bool _checkMatch(String query) {
+    return widget.name.toLowerCase().contains(query) ||
+        widget.value.toLowerCase().contains(query);
+  }
+
+  void _triggerHighlight() {
+    setState(() {
+      _isHighlighted = true;
+    });
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _isHighlighted = false;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -583,27 +842,40 @@ class _ContactListItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         activeBorderColor: theme.colorScheme.primary,
         child: InkWell(
-          onTap: () => AppUtils.openContact(context, value),
-          onLongPress: () => AppUtils.copyToClipboard(context, value, name),
+          onTap: () => AppUtils.openContact(context, widget.value),
+          onLongPress: () => AppUtils.copyToClipboard(context, widget.value, widget.name),
           borderRadius: BorderRadius.circular(10),
-          child: Container(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                color: _isHighlighted
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                width: _isHighlighted ? 1.5 : 1.0,
               ),
+              boxShadow: _isHighlighted
+                  ? [
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.25),
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      )
+                    ]
+                  : [],
             ),
             child: Row(
               children: [
                 Icon(
-                  value.contains('@')
+                  widget.value.contains('@')
                       ? Icons.email_outlined
-                      : value.contains('http') || value.contains('.ru')
+                      : widget.value.contains('http') || widget.value.contains('.ru')
                           ? Icons.language_outlined
                           : Icons.phone_in_talk_outlined,
-                  color: theme.colorScheme.primary,
+                  color: _isHighlighted ? theme.colorScheme.primary : theme.colorScheme.primary,
                   size: 20,
                 ),
                 const SizedBox(width: 12),
@@ -612,7 +884,7 @@ class _ContactListItem extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        name,
+                        widget.name,
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.secondary,
@@ -620,7 +892,7 @@ class _ContactListItem extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        value,
+                        widget.value,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: theme.colorScheme.onSurface,
