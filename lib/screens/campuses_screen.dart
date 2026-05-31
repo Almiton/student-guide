@@ -3,34 +3,196 @@ import '../data/mock_data.dart';
 import '../models/models.dart';
 import '../utils/app_utils.dart';
 
-class CampusesScreen extends StatelessWidget {
+class CampusesScreen extends StatefulWidget {
   const CampusesScreen({super.key});
 
   @override
+  State<CampusesScreen> createState() => _CampusesScreenState();
+}
+
+class _CampusesScreenState extends State<CampusesScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 8, bottom: 24),
-      itemCount: mockCampuses.length,
-      itemBuilder: (context, index) {
-        final campus = mockCampuses[index];
-        return _CampusCard(campus: campus);
-      },
+    final theme = Theme.of(context);
+
+    final filteredCampuses = mockCampuses.where((campus) {
+      if (_searchQuery.isEmpty) return true;
+      final query = _searchQuery.toLowerCase().trim();
+
+      // Проверка корпуса по названию, адресу и доп.инфо
+      final matchesCampus = campus.name.toLowerCase().contains(query) ||
+          campus.address.toLowerCase().contains(query) ||
+          (campus.extraInfo != null &&
+              campus.extraInfo!.any((info) => info.toLowerCase().contains(query)));
+
+      if (matchesCampus) return true;
+
+      // Проверка факультетов и их кафедр
+      final matchesFacultyOrDept = campus.faculties.any((faculty) {
+        final matchesFaculty = faculty.name.toLowerCase().contains(query) ||
+            faculty.description.toLowerCase().contains(query);
+        if (matchesFaculty) return true;
+
+        final matchesDept = faculty.departments.any((dept) {
+          return dept.name.toLowerCase().contains(query) ||
+              (dept.description != null && dept.description!.toLowerCase().contains(query)) ||
+              (dept.head != null && dept.head!.toLowerCase().contains(query));
+        });
+        return matchesDept;
+      });
+
+      if (matchesFacultyOrDept) return true;
+
+      // Проверка общеуниверситетских структур
+      final matchesStructure = campus.structures != null &&
+          campus.structures!.any((struct) => struct.toLowerCase().contains(query));
+      if (matchesStructure) return true;
+
+      // Проверка музеев
+      final matchesMuseum = campus.museums != null &&
+          campus.museums!.any((mus) => mus.toLowerCase().contains(query));
+      if (matchesMuseum) return true;
+
+      // Проверка контактов
+      final matchesContact = campus.extraContacts != null &&
+          campus.extraContacts!.entries.any((entry) =>
+              entry.key.toLowerCase().contains(query) ||
+              entry.value.toLowerCase().contains(query));
+      if (matchesContact) return true;
+
+      return false;
+    }).toList();
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
+            decoration: InputDecoration(
+              hintText: 'Поиск корпуса, факультета, кафедры...',
+              hintStyle: TextStyle(
+                color: theme.textTheme.bodySmall?.color,
+              ),
+              prefixIcon: Icon(
+                Icons.search,
+                color: theme.textTheme.bodySmall?.color,
+              ),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(
+                        Icons.clear,
+                        color: theme.textTheme.bodySmall?.color,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _searchQuery = '';
+                          _searchController.clear();
+                        });
+                      },
+                    )
+                  : null,
+              filled: true,
+              fillColor: theme.colorScheme.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.primary,
+                  width: 1.5,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+            style: TextStyle(color: theme.colorScheme.onSurface),
+          ),
+        ),
+        Expanded(
+          child: filteredCampuses.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.search_off,
+                        size: 48,
+                        color: theme.textTheme.bodySmall?.color,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Ничего не найдено',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.textTheme.bodySmall?.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.only(top: 8, bottom: 24),
+                  itemCount: filteredCampuses.length,
+                  itemBuilder: (context, index) {
+                    final campus = filteredCampuses[index];
+                    return _CampusCard(
+                      campus: campus,
+                      searchQuery: _searchQuery,
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 }
 
 class _CampusCard extends StatelessWidget {
   final Campus campus;
+  final String searchQuery;
 
-  const _CampusCard({required this.campus});
-
+  const _CampusCard({
+    required this.campus,
+    required this.searchQuery,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final query = searchQuery.toLowerCase().trim();
+
+    // Проверяем совпадение по факультетам или кафедрам для авто-развертывания
+    final bool hasFacultyMatch = query.isNotEmpty && campus.faculties.any((faculty) =>
+        faculty.name.toLowerCase().contains(query) ||
+        faculty.description.toLowerCase().contains(query));
+
+    final bool hasDeptMatch = query.isNotEmpty && campus.faculties.any((faculty) =>
+        faculty.departments.any((dept) =>
+            dept.name.toLowerCase().contains(query) ||
+            (dept.description != null && dept.description!.toLowerCase().contains(query)) ||
+            (dept.head != null && dept.head!.toLowerCase().contains(query))));
+
+    final bool shouldExpand = hasFacultyMatch || hasDeptMatch;
+
     return Card(
+      key: Key('${campus.name}_expanded_$shouldExpand'),
       child: ExpansionTile(
-        key: PageStorageKey(campus.name),
+        initiallyExpanded: shouldExpand,
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
@@ -100,7 +262,10 @@ class _CampusCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            ...campus.faculties.map((faculty) => _FacultyTile(faculty: faculty)),
+            ...campus.faculties.map((faculty) => _FacultyTile(
+                  faculty: faculty,
+                  searchQuery: searchQuery,
+                )),
           ],
           if (campus.structures != null && campus.structures!.isNotEmpty) ...[
             if (campus.faculties.isNotEmpty) const Divider(height: 24),
@@ -178,12 +343,24 @@ class _CampusCard extends StatelessWidget {
 
 class _FacultyTile extends StatelessWidget {
   final Faculty faculty;
+  final String searchQuery;
 
-  const _FacultyTile({required this.faculty});
+  const _FacultyTile({
+    required this.faculty,
+    required this.searchQuery,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final query = searchQuery.toLowerCase().trim();
+
+    // Проверяем совпадение по кафедрам для авто-развертывания факультета
+    final bool shouldExpand = query.isNotEmpty && faculty.departments.any((dept) =>
+        dept.name.toLowerCase().contains(query) ||
+        (dept.description != null && dept.description!.toLowerCase().contains(query)) ||
+        (dept.head != null && dept.head!.toLowerCase().contains(query)));
+
     return Card(
       elevation: 0,
       color: theme.colorScheme.surface.withValues(alpha: 0.5),
@@ -194,8 +371,9 @@ class _FacultyTile extends StatelessWidget {
         ),
       ),
       margin: const EdgeInsets.symmetric(vertical: 6),
+      key: Key('${faculty.name}_expanded_$shouldExpand'),
       child: ExpansionTile(
-        key: PageStorageKey(faculty.name),
+        initiallyExpanded: shouldExpand,
         title: Text(
           faculty.name,
           style: theme.textTheme.bodyLarge?.copyWith(

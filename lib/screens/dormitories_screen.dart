@@ -4,18 +4,126 @@ import '../data/mock_data.dart';
 import '../models/models.dart';
 import '../utils/app_utils.dart';
 
-class DormitoriesScreen extends StatelessWidget {
+class DormitoriesScreen extends StatefulWidget {
   const DormitoriesScreen({super.key});
 
   @override
+  State<DormitoriesScreen> createState() => _DormitoriesScreenState();
+}
+
+class _DormitoriesScreenState extends State<DormitoriesScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 8, bottom: 24),
-      itemCount: mockDormitories.length,
-      itemBuilder: (context, index) {
-        final dormitory = mockDormitories[index];
-        return _DormitoryCard(dormitory: dormitory);
-      },
+    final theme = Theme.of(context);
+
+    final filteredDormitories = mockDormitories.where((dormitory) {
+      if (_searchQuery.isEmpty) return true;
+      final query = _searchQuery.toLowerCase().trim();
+
+      // Проверяем, есть ли места для этого факультета
+      final hasFacultySpots = dormitory.facultySpots != null &&
+          dormitory.facultySpots!.keys.any((key) {
+            final lowerKey = key.toLowerCase();
+            return lowerKey.contains(query) ||
+                   lowerKey.contains('все факультеты') ||
+                   lowerKey.contains('общее распределение');
+          });
+
+      return hasFacultySpots;
+    }).toList();
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
+            decoration: InputDecoration(
+              hintText: 'Поиск по факультету...',
+              hintStyle: TextStyle(
+                color: theme.textTheme.bodySmall?.color,
+              ),
+              prefixIcon: Icon(
+                Icons.search,
+                color: theme.textTheme.bodySmall?.color,
+              ),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(
+                        Icons.clear,
+                        color: theme.textTheme.bodySmall?.color,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _searchQuery = '';
+                          _searchController.clear();
+                        });
+                      },
+                    )
+                  : null,
+              filled: true,
+              fillColor: theme.colorScheme.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.primary,
+                  width: 1.5,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+            style: TextStyle(color: theme.colorScheme.onSurface),
+          ),
+        ),
+        Expanded(
+          child: filteredDormitories.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.search_off,
+                        size: 48,
+                        color: theme.textTheme.bodySmall?.color,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Ничего не найдено',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.textTheme.bodySmall?.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.only(top: 8, bottom: 24),
+                  itemCount: filteredDormitories.length,
+                  itemBuilder: (context, index) {
+                    final dormitory = filteredDormitories[index];
+                    return _DormitoryCard(dormitory: dormitory);
+                  },
+                ),
+        ),
+      ],
     );
   }
 }

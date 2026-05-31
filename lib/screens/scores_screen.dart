@@ -18,8 +18,43 @@ class _ScoresScreenState extends State<ScoresScreen>
   late final Map<String, int> _minScores;
   String _searchQuery = '';
   String _selectedFaculty = 'Все';
+  String? _highlightedFaculty;
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _facultyScrollController = ScrollController();
+  final Map<String, GlobalKey> _facultyKeys = {};
+
+  void _scrollToFaculty(String faculty) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (!mounted) return;
+        final context = _facultyKeys[faculty]?.currentContext;
+        if (context != null && context.mounted) {
+          // ignore: use_build_context_synchronously
+          Scrollable.ensureVisible(
+            context,
+            duration: const Duration(milliseconds: 320),
+            curve: Curves.easeInOutCubic,
+            alignment: 0.0,
+          );
+        }
+      });
+    });
+  }
+
+  void _triggerFacultyFlash(String faculty) {
+    if (faculty == 'Все') return;
+    setState(() {
+      _highlightedFaculty = faculty;
+    });
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted && _highlightedFaculty == faculty) {
+        setState(() {
+          _highlightedFaculty = null;
+        });
+      }
+    });
+  }
 
   bool _showCalculator = false;
   final Map<String, int> _userScores = {};
@@ -128,6 +163,7 @@ class _ScoresScreenState extends State<ScoresScreen>
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
+    _facultyScrollController.dispose();
     _achievementsController.dispose();
     for (final controller in _scoreControllers.values) {
       controller.dispose();
@@ -953,6 +989,7 @@ class _ScoresScreenState extends State<ScoresScreen>
 
             // Faculty Selector
             SingleChildScrollView(
+              controller: _facultyScrollController,
               scrollDirection: Axis.horizontal,
               clipBehavior: Clip.none,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -967,88 +1004,110 @@ class _ScoresScreenState extends State<ScoresScreen>
                       .map((faculty) {
                         final isSelected = _selectedFaculty == faculty;
                         final facColor = AppUtils.getFacultyColor(faculty);
+                        final key = _facultyKeys.putIfAbsent(faculty, () => GlobalKey());
                         return Padding(
                           padding: const EdgeInsets.only(right: 8),
-                          child: ChoiceChip(
-                            showCheckmark: false,
-                            label: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  faculty ==
-                                          'Передовая инженерная школа «Российская электроника, инфокоммуникации и радиосвязь»'
-                                      ? 'ПИШ'
-                                      : faculty,
-                                ),
-                                const SizedBox(width: 5),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 5,
-                                    vertical: 1.5,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: (_highlightedFaculty == faculty)
+                                  ? [
+                                      BoxShadow(
+                                        color: facColor.withValues(alpha: 0.65),
+                                        blurRadius: 10,
+                                        spreadRadius: 2,
+                                      )
+                                    ]
+                                  : null,
+                            ),
+                            child: ChoiceChip(
+                              key: key,
+                              showCheckmark: false,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              label: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    faculty ==
+                                            'Передовая инженерная школа «Российская электроника, инфокоммуникации и радиосвязь»'
+                                        ? 'ПИШ'
+                                        : faculty,
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? facColor.withValues(alpha: 0.15)
-                                        : theme.colorScheme.onSurface
-                                              .withValues(alpha: 0.08),
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  child: Text(
-                                    '${_getSpecCountForFaculty(faculty)}',
-                                    style: TextStyle(
+                                  const SizedBox(width: 5),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 5,
+                                      vertical: 1.5,
+                                    ),
+                                    decoration: BoxDecoration(
                                       color: isSelected
-                                          ? (theme.brightness ==
-                                                    Brightness.light
-                                                ? Color.alphaBlend(
-                                                    Colors.black.withValues(
-                                                      alpha: 0.22,
-                                                    ),
-                                                    facColor,
-                                                  )
-                                                : Color.alphaBlend(
-                                                    Colors.white.withValues(
-                                                      alpha: 0.22,
-                                                    ),
-                                                    facColor,
-                                                  ))
+                                          ? facColor.withValues(alpha: 0.15)
                                           : theme.colorScheme.onSurface
-                                                .withValues(alpha: 0.75),
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.bold,
+                                                .withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child: Text(
+                                      '${_getSpecCountForFaculty(faculty)}',
+                                      style: TextStyle(
+                                        color: isSelected
+                                            ? (theme.brightness ==
+                                                      Brightness.light
+                                                  ? Color.alphaBlend(
+                                                      Colors.black.withValues(
+                                                        alpha: 0.22,
+                                                      ),
+                                                      facColor,
+                                                    )
+                                                  : Color.alphaBlend(
+                                                      Colors.white.withValues(
+                                                        alpha: 0.22,
+                                                      ),
+                                                      facColor,
+                                                    ))
+                                            : theme.colorScheme.onSurface
+                                                  .withValues(alpha: 0.75),
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                setState(() {
+                                  if (selected) {
+                                    _selectedFaculty = faculty;
+                                  } else {
+                                    _selectedFaculty = 'Все';
+                                  }
+                                });
+                                _scrollToTop();
+                                _scrollToFaculty(_selectedFaculty);
+                                _triggerFacultyFlash(faculty);
+                              },
+                              selectedColor: facColor.withValues(alpha: 0.2),
+                              labelStyle: TextStyle(
+                                color: isSelected
+                                    ? facColor
+                                    : theme.textTheme.bodyMedium?.color,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                              side: BorderSide(
+                                color: isSelected
+                                    ? facColor
+                                    : theme.colorScheme.onSurface.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                width: 1,
+                              ),
+                              backgroundColor: theme.colorScheme.surface,
                             ),
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              setState(() {
-                                if (selected) {
-                                  _selectedFaculty = faculty;
-                                } else {
-                                  _selectedFaculty = 'Все';
-                                }
-                              });
-                              _scrollToTop();
-                            },
-                            selectedColor: facColor.withValues(alpha: 0.2),
-                            labelStyle: TextStyle(
-                              color: isSelected
-                                  ? facColor
-                                  : theme.textTheme.bodyMedium?.color,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                            ),
-                            side: BorderSide(
-                              color: isSelected
-                                  ? facColor
-                                  : theme.colorScheme.onSurface.withValues(
-                                      alpha: 0.1,
-                                    ),
-                              width: 1,
-                            ),
-                            backgroundColor: theme.colorScheme.surface,
                           ),
                         );
                       }),
@@ -1090,6 +1149,8 @@ class _ScoresScreenState extends State<ScoresScreen>
                           userTotal: _calculateUserTotalForDirection(score),
                           hasUserScores: _userScores.isNotEmpty,
                           isCompared: _compareList.contains(score),
+                          isFacultySelected: _selectedFaculty == score.facultyName,
+                          isFacultyHighlighted: _highlightedFaculty == score.facultyName,
                           onCompareToggled: (selected) {
                             setState(() {
                               if (selected) {
@@ -1098,6 +1159,18 @@ class _ScoresScreenState extends State<ScoresScreen>
                                 _compareList.remove(score);
                               }
                             });
+                          },
+                          onFacultyPressed: () {
+                            setState(() {
+                              if (_selectedFaculty == score.facultyName) {
+                                _selectedFaculty = 'Все';
+                              } else {
+                                _selectedFaculty = score.facultyName;
+                              }
+                            });
+                            _scrollToTop();
+                            _scrollToFaculty(_selectedFaculty);
+                            _triggerFacultyFlash(score.facultyName);
                           },
                         );
                       },
@@ -1222,9 +1295,9 @@ class YearRoulette extends StatefulWidget {
 }
 
 class _YearRouletteState extends State<YearRoulette> {
-  late final PageController _pageController;
+  late final FixedExtentScrollController _scrollController;
   late final List<MapEntry<int, int>> _yearsList;
-  double _currentPage = 0.0;
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -1242,34 +1315,20 @@ class _YearRouletteState extends State<YearRoulette> {
     final initialPage = idx2025 >= 0
         ? idx2025
         : (_yearsList.length > 1 ? _yearsList.length - 2 : 0);
-    _currentPage = initialPage.toDouble();
-    _pageController = PageController(
-      viewportFraction: 0.33,
-      initialPage: initialPage,
-    );
-
-    int lastSnappedPage = initialPage;
-    _pageController.addListener(() {
-      if (mounted) {
-        final double page = _pageController.page ?? 0.0;
-        setState(() {
-          _currentPage = page;
-        });
-        final int currentSnapped = page.round();
-        if (currentSnapped != lastSnappedPage) {
-          lastSnappedPage = currentSnapped;
-          SystemSound.play(SystemSoundType.click);
-          HapticFeedback.lightImpact();
-          HapticFeedback.selectionClick();
-        }
-      }
-    });
+    _selectedIndex = initialPage;
+    _scrollController = FixedExtentScrollController(initialItem: initialPage);
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _playFeedback() {
+    SystemSound.play(SystemSoundType.click);
+    HapticFeedback.lightImpact();
+    HapticFeedback.selectionClick();
   }
 
   @override
@@ -1277,91 +1336,133 @@ class _YearRouletteState extends State<YearRoulette> {
     if (_yearsList.isEmpty) return const SizedBox.shrink();
     final theme = Theme.of(context);
 
-    return ShaderMask(
-      shaderCallback: (Rect bounds) {
-        return const LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            Colors.transparent,
-            Colors.black,
-            Colors.black,
-            Colors.transparent,
-          ],
-          stops: [0.0, 0.15, 0.85, 1.0],
-        ).createShader(bounds);
-      },
-      blendMode: BlendMode.dstIn,
-      child: SizedBox(
-        height: 110,
-        child: PageView.builder(
-          physics: const PageScrollPhysics(parent: BouncingScrollPhysics()),
-          controller: _pageController,
-          itemCount: _yearsList.length,
-          clipBehavior: Clip.antiAlias,
-          itemBuilder: (context, index) {
-            final entry = _yearsList[index];
-            final year = entry.key;
-            final score = entry.value;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
 
-            final double diff = (index - _currentPage).abs();
-            final double scale = (1.35 - (diff * 0.45)).clamp(0.75, 1.35);
-            final double opacity = (1.0 - (diff * 0.40)).clamp(0.6, 1.0);
-            final bool isCenter = diff < 0.5;
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapUp: (details) {
+            final x = details.localPosition.dx;
+            final currentIndex = _scrollController.selectedItem;
+            if (x < width / 3) {
+              if (currentIndex > 0) {
+                final targetIndex = currentIndex - 1;
+                setState(() {
+                  _selectedIndex = targetIndex;
+                });
+                _scrollController.animateToItem(
+                  targetIndex,
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutCubic,
+                );
+              }
+            } else if (x > 2 * width / 3) {
+              if (currentIndex < _yearsList.length - 1) {
+                final targetIndex = currentIndex + 1;
+                setState(() {
+                  _selectedIndex = targetIndex;
+                });
+                _scrollController.animateToItem(
+                  targetIndex,
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutCubic,
+                );
+              }
+            }
+          },
+          child: ShaderMask(
+            shaderCallback: (Rect bounds) {
+              return const LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Colors.transparent,
+                  Colors.black,
+                  Colors.black,
+                  Colors.transparent,
+                ],
+                stops: [0.0, 0.15, 0.85, 1.0],
+              ).createShader(bounds);
+            },
+            blendMode: BlendMode.dstIn,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 30),
+              child: RotatedBox(
+                quarterTurns: 3,
+                child: ListWheelScrollView.useDelegate(
+                  controller: _scrollController,
+                  itemExtent: width / 3,
+                  physics: const FixedExtentScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  onSelectedItemChanged: (index) {
+                    if (index != _selectedIndex) {
+                      setState(() {
+                        _selectedIndex = index;
+                      });
+                      _playFeedback();
+                    }
+                  },
+                  childDelegate: ListWheelChildBuilderDelegate(
+                    builder: (context, index) {
+                      final entry = _yearsList[index];
+                      final year = entry.key;
+                      final score = entry.value;
 
-            return Container(
-              color: Colors.transparent,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  _pageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 350),
-                    curve: Curves.easeOutCubic,
-                  );
-                },
-                child: Transform.scale(
-                  scale: scale,
-                  child: Opacity(
-                    opacity: opacity,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            year.toString(),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontSize: 12,
-                              fontWeight: isCenter
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                              color: isCenter
-                                  ? theme.colorScheme.secondary
-                                  : theme.textTheme.bodySmall?.color
-                                        ?.withValues(alpha: 0.6),
+                      final isSelected = index == _selectedIndex;
+
+                      return RotatedBox(
+                        quarterTurns: 1,
+                        child: Center(
+                          child: AnimatedScale(
+                            scale: isSelected ? 1.35 : 0.9,
+                            duration: const Duration(milliseconds: 150),
+                            child: AnimatedOpacity(
+                              opacity: isSelected ? 1.0 : 0.6,
+                              duration: const Duration(milliseconds: 150),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    year.toString(),
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      fontSize: 12,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: isSelected
+                                          ? theme.colorScheme.secondary
+                                          : theme.textTheme.bodySmall?.color
+                                                ?.withValues(alpha: 0.6),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    score == 0 ? '—' : score.toString(),
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected
+                                          ? theme.colorScheme.primary
+                                          : theme.textTheme.titleMedium?.color,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            score == 0 ? '—' : score.toString(),
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: isCenter
-                                  ? theme.colorScheme.primary
-                                  : theme.textTheme.titleMedium?.color,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
+                    childCount: _yearsList.length,
                   ),
                 ),
               ),
-            );
-          },
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -1372,6 +1473,9 @@ class AdmissionScoreCard extends StatefulWidget {
   final bool hasUserScores;
   final bool isCompared;
   final ValueChanged<bool> onCompareToggled;
+  final VoidCallback? onFacultyPressed;
+  final bool isFacultySelected;
+  final bool isFacultyHighlighted;
 
   const AdmissionScoreCard({
     super.key,
@@ -1380,6 +1484,9 @@ class AdmissionScoreCard extends StatefulWidget {
     required this.hasUserScores,
     required this.isCompared,
     required this.onCompareToggled,
+    required this.isFacultySelected,
+    required this.isFacultyHighlighted,
+    this.onFacultyPressed,
   });
 
   @override
@@ -1465,9 +1572,20 @@ class _AdmissionScoreCardState extends State<AdmissionScoreCard> {
       required int flex,
       required int displayFlex,
       required Color color,
-      required BorderRadius borderRadius,
+      required int index,
+      required int totalSegments,
     }) {
       final isHighlighted = _activeCategory == category;
+
+      // Полупрозрачный цвет внутри (как у кнопок) с масштабированием базовой прозрачности
+      final fillColor = isHighlighted
+          ? color.withValues(alpha: (color.a * 0.85).clamp(0.25, 1.0))
+          : color.withValues(alpha: (color.a * 0.35).clamp(0.12, 1.0));
+
+      // Край обычный (оригинальный цвет сегмента, при нажатии подсвечивается)
+      final borderColor = isHighlighted
+          ? color.withValues(alpha: (color.a * 1.3).clamp(0.6, 1.0))
+          : color;
 
       return Expanded(
         flex: displayFlex,
@@ -1479,31 +1597,36 @@ class _AdmissionScoreCardState extends State<AdmissionScoreCard> {
             });
           },
           onTapUp: (_) {
-            setState(() {
-              _activeCategory = null;
+            Future.delayed(const Duration(milliseconds: 250), () {
+              if (mounted && _activeCategory == category) {
+                setState(() {
+                  _activeCategory = null;
+                });
+              }
             });
           },
           onTapCancel: () {
-            setState(() {
-              _activeCategory = null;
+            Future.delayed(const Duration(milliseconds: 250), () {
+              if (mounted && _activeCategory == category) {
+                setState(() {
+                  _activeCategory = null;
+                });
+              }
             });
           },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             height: double.infinity,
             decoration: BoxDecoration(
-              color: isHighlighted
-                  ? Color.alphaBlend(Colors.white.withValues(alpha: 0.2), color)
-                  : color.withValues(alpha: color.a * 0.3),
-              border: Border.all(
-                color: isHighlighted
-                    ? (theme.brightness == Brightness.dark
-                        ? Colors.white
-                        : Colors.black.withValues(alpha: 0.6))
-                    : color,
-                width: isHighlighted ? 2.0 : 0.8,
+              color: fillColor,
+              border: Border(
+                left: index == 0
+                    ? BorderSide(color: borderColor, width: 1.0)
+                    : BorderSide.none,
+                right: BorderSide(color: borderColor, width: 1.0),
+                top: BorderSide(color: borderColor, width: 1.0),
+                bottom: BorderSide(color: borderColor, width: 1.0),
               ),
-              borderRadius: borderRadius,
             ),
             child: Center(
               child: FittedBox(
@@ -1514,10 +1637,12 @@ class _AdmissionScoreCardState extends State<AdmissionScoreCard> {
                     '$flex',
                     style: TextStyle(
                       color: isHighlighted
-                          ? Colors.white
+                          ? (theme.brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black87)
                           : (theme.brightness == Brightness.dark
-                              ? Colors.white.withValues(alpha: 0.9)
-                              : color.withValues(alpha: 1.0)),
+                              ? facColor.withValues(alpha: 0.95)
+                              : Color.alphaBlend(Colors.black.withValues(alpha: 0.15), facColor)),
                       fontWeight: FontWeight.bold,
                       fontSize: 11,
                     ),
@@ -1582,42 +1707,23 @@ class _AdmissionScoreCardState extends State<AdmissionScoreCard> {
         const SizedBox(height: 8),
         Container(
           height: 24,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
-          ),
           clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.03),
+          ),
           child: Row(
-            children: List.generate(activeSegments.length, (index) {
-              final segment = activeSegments[index];
-              final isFirst = index == 0;
-              final isLast = index == activeSegments.length - 1;
-
-              BorderRadius borderRadius;
-              if (isFirst && isLast) {
-                borderRadius = BorderRadius.circular(12);
-              } else if (isFirst) {
-                borderRadius = const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  bottomLeft: Radius.circular(12),
-                );
-              } else if (isLast) {
-                borderRadius = const BorderRadius.only(
-                  topRight: Radius.circular(12),
-                  bottomRight: Radius.circular(12),
-                );
-              } else {
-                borderRadius = BorderRadius.zero;
-              }
-
-              return buildBarSegment(
-                category: segment['category'] as String,
-                flex: segment['flex'] as int,
-                displayFlex: segment['displayFlex'] as int,
-                color: segment['color'] as Color,
-                borderRadius: borderRadius,
-              );
-            }),
+            children: [
+              for (int index = 0; index < activeSegments.length; index++)
+                buildBarSegment(
+                  category: activeSegments[index]['category'] as String,
+                  flex: activeSegments[index]['flex'] as int,
+                  displayFlex: activeSegments[index]['displayFlex'] as int,
+                  color: activeSegments[index]['color'] as Color,
+                  index: index,
+                  totalSegments: activeSegments.length,
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 8),
@@ -1665,6 +1771,9 @@ class _AdmissionScoreCardState extends State<AdmissionScoreCard> {
     String category,
   ) {
     final isHighlighted = _activeCategory == category;
+    final dotColor = isHighlighted
+        ? color.withValues(alpha: (color.a * 1.3).clamp(0.0, 1.0))
+        : color.withValues(alpha: color.a * 0.65);
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -1674,13 +1783,21 @@ class _AdmissionScoreCardState extends State<AdmissionScoreCard> {
         });
       },
       onTapUp: (_) {
-        setState(() {
-          _activeCategory = null;
+        Future.delayed(const Duration(milliseconds: 250), () {
+          if (mounted && _activeCategory == category) {
+            setState(() {
+              _activeCategory = null;
+            });
+          }
         });
       },
       onTapCancel: () {
-        setState(() {
-          _activeCategory = null;
+        Future.delayed(const Duration(milliseconds: 250), () {
+          if (mounted && _activeCategory == category) {
+            setState(() {
+              _activeCategory = null;
+            });
+          }
         });
       },
       child: AnimatedContainer(
@@ -1690,11 +1807,12 @@ class _AdmissionScoreCardState extends State<AdmissionScoreCard> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
               width: 8,
               height: 8,
               decoration: BoxDecoration(
-                color: color,
+                color: dotColor,
                 shape: BoxShape.circle,
                 boxShadow: isHighlighted
                     ? [
@@ -1785,27 +1903,48 @@ class _AdmissionScoreCardState extends State<AdmissionScoreCard> {
                           Row(
                             children: [
                               Flexible(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: facColor.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(
-                                      color: facColor.withValues(alpha: 0.3),
+                                child: InkWell(
+                                  onTap: widget.onFacultyPressed,
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 150),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
                                     ),
-                                  ),
-                                  child: Text(
-                                    score.facultyName,
-                                    style: TextStyle(
-                                      color: facColor,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
+                                    decoration: BoxDecoration(
+                                      color: widget.isFacultySelected
+                                          ? facColor.withValues(alpha: 0.22)
+                                          : facColor.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: widget.isFacultySelected
+                                            ? facColor.withValues(alpha: 0.6)
+                                            : facColor.withValues(alpha: 0.25),
+                                        width: widget.isFacultySelected ? 1.2 : 1.0,
+                                      ),
+                                      boxShadow: widget.isFacultyHighlighted
+                                          ? [
+                                              BoxShadow(
+                                                color: facColor.withValues(alpha: 0.6),
+                                                blurRadius: 10,
+                                                spreadRadius: 2,
+                                              )
+                                            ]
+                                          : null,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                    child: Text(
+                                      score.facultyName,
+                                      style: TextStyle(
+                                        color: facColor,
+                                        fontSize: 11,
+                                        fontWeight: widget.isFacultySelected
+                                            ? FontWeight.bold
+                                            : FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -1972,7 +2111,7 @@ class _AdmissionScoreCardState extends State<AdmissionScoreCard> {
                 _buildBudgetSpotsSection(score, theme, facColor),
                 const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  height: 150,
                   decoration: BoxDecoration(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.03),
                     borderRadius: BorderRadius.circular(12),
@@ -1982,40 +2121,46 @@ class _AdmissionScoreCardState extends State<AdmissionScoreCard> {
                       ),
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Stack(
                     children: [
-                      // Score Eligibility Indicator removed
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Проходные баллы прошлых лет',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Row(
+                      Positioned.fill(
+                        child: YearRoulette(
+                          key: ValueKey('${score.directionName}_roulette'),
+                          passingScores: score.passingScores,
+                        ),
+                      ),
+                      Positioned(
+                        top: 12,
+                        left: 12,
+                        right: 12,
+                        child: IgnorePointer(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Icon(trendIcon, size: 16, color: trendColor),
-                              const SizedBox(width: 4),
                               Text(
-                                trendText,
-                                style: TextStyle(
-                                  fontSize: 12,
+                                'Проходные баллы прошлых лет',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                  color: trendColor,
                                 ),
+                              ),
+                              Row(
+                                children: [
+                                  Icon(trendIcon, size: 16, color: trendColor),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    trendText,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: trendColor,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      YearRoulette(
-                        key: ValueKey('${score.directionName}_roulette'),
-                        passingScores: score.passingScores,
+                        ),
                       ),
                     ],
                   ),
