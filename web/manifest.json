@@ -1,6 +1,6 @@
 {
-    "name": "student_guide",
-    "short_name": "student_guide",
+    "name": "Гид студента",
+    "short_name": "Гид студента",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

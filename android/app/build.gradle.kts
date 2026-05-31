@@ -40,9 +40,9 @@ android {
             if (apkOutput != null) {
                 val abi = apkOutput.filters.find { it.filterType == "ABI" }?.identifier
                 val newName = if (abi != null) {
-                    "student_guide_v${variant.versionName}_${abi}.apk"
+                    "GidStudenta_v${variant.versionName}_${abi}.apk"
                 } else {
-                    "student_guide_v${variant.versionName}.apk"
+                    "GidStudenta_v${variant.versionName}.apk"
                 }
                 apkOutput.outputFileName = newName
             }
@@ -58,4 +58,19 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+tasks.matching { it.name.contains("assembleRelease") }.configureEach {
+    doLast {
+        val buildDirFile = layout.buildDirectory.get().asFile
+        val srcDir = file("$buildDirFile/outputs/apk/release")
+        val destDir = file("$buildDirFile/outputs/flutter-apk")
+        if (srcDir.exists()) {
+            srcDir.listFiles()?.forEach { file ->
+                if (file.name.endsWith(".apk")) {
+                    file.copyTo(File(destDir, file.name), overwrite = true)
+                }
+            }
+        }
+    }
 }
