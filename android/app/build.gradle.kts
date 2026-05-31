@@ -38,8 +38,13 @@ android {
         variant.outputs.forEach { output ->
             val apkOutput = output as? com.android.build.gradle.internal.api.ApkVariantOutputImpl
             if (apkOutput != null) {
-                val abi = apkOutput.filters.find { it.filterType == "ABI" }?.identifier ?: "universal"
-                apkOutput.outputFileName = "student_guide_v${variant.versionName}_${abi}.apk"
+                val abi = apkOutput.filters.find { it.filterType == "ABI" }?.identifier
+                val newName = if (abi != null) {
+                    "student_guide_v${variant.versionName}_${abi}.apk"
+                } else {
+                    "student_guide_v${variant.versionName}.apk"
+                }
+                apkOutput.outputFileName = newName
             }
         }
     }
