@@ -29,13 +29,19 @@ class _DormitoriesScreenState extends State<DormitoriesScreen> {
       if (_searchQuery.isEmpty) return true;
       final query = _searchQuery.toLowerCase().trim();
 
-      // Проверяем, есть ли места для этого факультета
+      // Поиск по названию, адресу или описанию самого общежития
+      final matchesDorm = dormitory.name.toLowerCase().contains(query) ||
+          dormitory.address.toLowerCase().contains(query) ||
+          dormitory.description.toLowerCase().contains(query);
+      if (matchesDorm) return true;
+
+      // Проверяем, есть ли места для этого факультета (с учетом сокращений!)
       final hasFacultySpots = dormitory.facultySpots != null &&
           dormitory.facultySpots!.keys.any((key) {
-            final lowerKey = key.toLowerCase();
-            return lowerKey.contains(query) ||
-                   lowerKey.contains('все факультеты') ||
-                   lowerKey.contains('общее распределение');
+            return AppUtils.matchFaculty(key, query) ||
+                   key.toLowerCase().contains(query) ||
+                   key.toLowerCase().contains('все факультеты') ||
+                   key.toLowerCase().contains('общее распределение');
           });
 
       return hasFacultySpots;
@@ -53,7 +59,7 @@ class _DormitoriesScreenState extends State<DormitoriesScreen> {
               });
             },
             decoration: InputDecoration(
-              hintText: 'Поиск по факультету...',
+              hintText: 'Поиск общежития, адреса или факультета...',
               hintStyle: TextStyle(
                 color: theme.textTheme.bodySmall?.color,
               ),

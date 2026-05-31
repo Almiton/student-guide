@@ -174,9 +174,8 @@ class _ScoresScreenState extends State<ScoresScreen>
   int _getSpecCountForFaculty(String faculty) {
     return mockAdmissionScores.where((score) {
       final matchesSearch =
-          score.directionName.toLowerCase().contains(
-            _searchQuery.toLowerCase(),
-          );
+          score.directionName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          AppUtils.matchFaculty(score.facultyName, _searchQuery);
 
       final matchesFaculty = faculty == 'Все' || score.facultyName == faculty;
 
@@ -552,9 +551,8 @@ class _ScoresScreenState extends State<ScoresScreen>
 
     final filteredScores = mockAdmissionScores.where((score) {
       final matchesSearch =
-          score.directionName.toLowerCase().contains(
-            _searchQuery.toLowerCase(),
-          );
+          score.directionName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          AppUtils.matchFaculty(score.facultyName, _searchQuery);
       final matchesFaculty =
           _selectedFaculty == 'Все' || score.facultyName == _selectedFaculty;
 
@@ -1295,9 +1293,9 @@ class YearRoulette extends StatefulWidget {
 }
 
 class _YearRouletteState extends State<YearRoulette> {
-  late final FixedExtentScrollController _scrollController;
+  late final PageController _pageController;
   late final List<MapEntry<int, int>> _yearsList;
-  int _selectedIndex = 0;
+  double _currentPage = 0.0;
 
   @override
   void initState() {
@@ -1315,20 +1313,34 @@ class _YearRouletteState extends State<YearRoulette> {
     final initialPage = idx2025 >= 0
         ? idx2025
         : (_yearsList.length > 1 ? _yearsList.length - 2 : 0);
-    _selectedIndex = initialPage;
-    _scrollController = FixedExtentScrollController(initialItem: initialPage);
+    _currentPage = initialPage.toDouble();
+    _pageController = PageController(
+      viewportFraction: 0.33,
+      initialPage: initialPage,
+    );
+
+    int lastSnappedPage = initialPage;
+    _pageController.addListener(() {
+      if (mounted) {
+        final double page = _pageController.page ?? 0.0;
+        setState(() {
+          _currentPage = page;
+        });
+        final int currentSnapped = page.round();
+        if (currentSnapped != lastSnappedPage) {
+          lastSnappedPage = currentSnapped;
+          SystemSound.play(SystemSoundType.click);
+          HapticFeedback.lightImpact();
+          HapticFeedback.selectionClick();
+        }
+      }
+    });
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _pageController.dispose();
     super.dispose();
-  }
-
-  void _playFeedback() {
-    SystemSound.play(SystemSoundType.click);
-    HapticFeedback.lightImpact();
-    HapticFeedback.selectionClick();
   }
 
   @override
@@ -1338,127 +1350,88 @@ class _YearRouletteState extends State<YearRoulette> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
-
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapUp: (details) {
-            final x = details.localPosition.dx;
-            final currentIndex = _scrollController.selectedItem;
-            if (x < width / 3) {
-              if (currentIndex > 0) {
-                final targetIndex = currentIndex - 1;
-                setState(() {
-                  _selectedIndex = targetIndex;
-                });
-                _scrollController.animateToItem(
-                  targetIndex,
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOutCubic,
-                );
-              }
-            } else if (x > 2 * width / 3) {
-              if (currentIndex < _yearsList.length - 1) {
-                final targetIndex = currentIndex + 1;
-                setState(() {
-                  _selectedIndex = targetIndex;
-                });
-                _scrollController.animateToItem(
-                  targetIndex,
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOutCubic,
-                );
-              }
-            }
+        return ShaderMask(
+          shaderCallback: (Rect bounds) {
+            return const LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                Colors.transparent,
+                Colors.black,
+                Colors.black,
+                Colors.transparent,
+              ],
+              stops: [0.0, 0.15, 0.85, 1.0],
+            ).createShader(bounds);
           },
-          child: ShaderMask(
-            shaderCallback: (Rect bounds) {
-              return const LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [
-                  Colors.transparent,
-                  Colors.black,
-                  Colors.black,
-                  Colors.transparent,
-                ],
-                stops: [0.0, 0.15, 0.85, 1.0],
-              ).createShader(bounds);
-            },
-            blendMode: BlendMode.dstIn,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 30),
-              child: RotatedBox(
-                quarterTurns: 3,
-                child: ListWheelScrollView.useDelegate(
-                  controller: _scrollController,
-                  itemExtent: width / 3,
-                  physics: const FixedExtentScrollPhysics(
-                    parent: BouncingScrollPhysics(),
-                  ),
-                  onSelectedItemChanged: (index) {
-                    if (index != _selectedIndex) {
-                      setState(() {
-                        _selectedIndex = index;
-                      });
-                      _playFeedback();
-                    }
-                  },
-                  childDelegate: ListWheelChildBuilderDelegate(
-                    builder: (context, index) {
-                      final entry = _yearsList[index];
-                      final year = entry.key;
-                      final score = entry.value;
+          blendMode: BlendMode.dstIn,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 30),
+            child: PageView.builder(
+              physics: const PageScrollPhysics(parent: BouncingScrollPhysics()),
+              controller: _pageController,
+              itemCount: _yearsList.length,
+              clipBehavior: Clip.none,
+              itemBuilder: (context, index) {
+                final entry = _yearsList[index];
+                final year = entry.key;
+                final score = entry.value;
 
-                      final isSelected = index == _selectedIndex;
+                final double diff = (index - _currentPage).abs();
+                final double scale = (1.35 - (diff * 0.45)).clamp(0.75, 1.35);
+                final double opacity = (1.0 - (diff * 0.40)).clamp(0.6, 1.0);
+                final bool isCenter = diff < 0.5;
 
-                      return RotatedBox(
-                        quarterTurns: 1,
-                        child: Center(
-                          child: AnimatedScale(
-                            scale: isSelected ? 1.35 : 0.9,
-                            duration: const Duration(milliseconds: 150),
-                            child: AnimatedOpacity(
-                              opacity: isSelected ? 1.0 : 0.6,
-                              duration: const Duration(milliseconds: 150),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    year.toString(),
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      fontSize: 12,
-                                      fontWeight: isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                      color: isSelected
-                                          ? theme.colorScheme.secondary
-                                          : theme.textTheme.bodySmall?.color
-                                                ?.withValues(alpha: 0.6),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    score == 0 ? '—' : score.toString(),
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: isSelected
-                                          ? theme.colorScheme.primary
-                                          : theme.textTheme.titleMedium?.color,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
+                return Center(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      _pageController.animateToPage(
+                        index,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOutCubic,
                       );
                     },
-                    childCount: _yearsList.length,
+                    child: AnimatedScale(
+                      scale: scale,
+                      duration: const Duration(milliseconds: 150),
+                      child: AnimatedOpacity(
+                        opacity: opacity,
+                        duration: const Duration(milliseconds: 150),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              year.toString(),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontSize: 12,
+                                fontWeight: isCenter
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: isCenter
+                                    ? theme.colorScheme.secondary
+                                    : theme.textTheme.bodySmall?.color
+                                          ?.withValues(alpha: 0.6),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              score == 0 ? '—' : score.toString(),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: isCenter
+                                    ? theme.colorScheme.primary
+                                    : theme.textTheme.titleMedium?.color,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ),
         );

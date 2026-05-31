@@ -36,16 +36,18 @@ class _CampusesScreenState extends State<CampusesScreen> {
 
       if (matchesCampus) return true;
 
-      // Проверка факультетов и их кафедр
+      // Проверка факультетов и их кафедр (с поддержкой поиска по сокращениям)
       final matchesFacultyOrDept = campus.faculties.any((faculty) {
         final matchesFaculty = faculty.name.toLowerCase().contains(query) ||
-            faculty.description.toLowerCase().contains(query);
+            faculty.description.toLowerCase().contains(query) ||
+            AppUtils.matchFaculty(faculty.name, query);
         if (matchesFaculty) return true;
 
         final matchesDept = faculty.departments.any((dept) {
           return dept.name.toLowerCase().contains(query) ||
               (dept.description != null && dept.description!.toLowerCase().contains(query)) ||
-              (dept.head != null && dept.head!.toLowerCase().contains(query));
+              (dept.head != null && dept.head!.toLowerCase().contains(query)) ||
+              AppUtils.matchDepartment(dept.name, query);
         });
         return matchesDept;
       });

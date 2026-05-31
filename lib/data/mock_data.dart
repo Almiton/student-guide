@@ -1,4 +1,4 @@
-﻿import '../models/models.dart';
+import '../models/models.dart';
 
 final _geologicalFaculty = Faculty(
   name: 'Геологический факультет',
@@ -1487,22 +1487,7 @@ final List<AdmissionScore> mockAdmissionScores = [
     quotaSeparateMap: {'Очная': 3},
     prices: {'Очная': '174 600 руб/год'},
   ),
-  AdmissionScore(
-    directionName: '45.03.02 Лингвистика',
-    facultyName: 'РГФ',
-    subjects: ['Русский язык', 'Иностранный язык', 'Обществознание/Литература'],
-    passingScores: {2015: 249, 2016: 261, 2017: 260, 2018: 257, 2019: 273, 2020: 269, 2021: 273, 2022: 275, 2023: 264, 2024: 252, 2025: 257},
-    contractSpotsMap: {'Очная': 79},
-    prices: {'Очная': '174 600 руб/год'},
-  ),
-  AdmissionScore(
-    directionName: '45.03.02 Лингвистика',
-    facultyName: 'РГФ',
-    subjects: ['Русский язык', 'Иностранный язык', 'Обществознание/Литература'],
-    passingScores: {2015: 249, 2016: 261, 2017: 260, 2018: 257, 2019: 273, 2020: 269, 2021: 273, 2022: 275, 2023: 264, 2024: 252, 2025: 257},
-    contractSpotsMap: {'Очная': 79},
-    prices: {'Очная': '174 600 руб/год'},
-  ),
+
   AdmissionScore(
     directionName: '45.03.03 Фундаментальная и прикладная лингвистика',
     facultyName: 'РГФ',
@@ -1757,22 +1742,7 @@ final List<AdmissionScore> mockAdmissionScores = [
     contractSpotsMap: {'Очная': 112},
     prices: {'Очная': '173 600 руб/год'},
   ),
-  AdmissionScore(
-    directionName: '45.05.01 Перевод и переводоведение',
-    facultyName: 'РГФ',
-    subjects: ['Русский язык', 'Иностранный язык', 'Обществознание/Литература'],
-    passingScores: {2015: 252, 2016: 267, 2017: 205, 2018: 167, 2019: 222, 2020: 0, 2021: 286, 2022: 285, 2023: 277, 2024: 261, 2025: 286},
-    contractSpotsMap: {'Очная': 112},
-    prices: {'Очная': '173 600 руб/год'},
-  ),
-  AdmissionScore(
-    directionName: '45.05.01 Перевод и переводоведение',
-    facultyName: 'РГФ',
-    subjects: ['Русский язык', 'Иностранный язык', 'Обществознание/Литература'],
-    passingScores: {2015: 252, 2016: 267, 2017: 205, 2018: 167, 2019: 222, 2020: 0, 2021: 286, 2022: 285, 2023: 277, 2024: 261, 2025: 286},
-    contractSpotsMap: {'Очная': 112},
-    prices: {'Очная': '173 600 руб/год'},
-  ),
+
   AdmissionScore(
     directionName: '56.05.05 Военная журналистика',
     facultyName: 'Журналистики',
