@@ -244,7 +244,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                       }
                     });
                   },
-                  selectedColor: catColor.withOpacity(0.2),
+                  selectedColor: catColor.withOpacity(0.08),
                   labelStyle: TextStyle(
                     color: isSelected
                         ? catColor
@@ -255,7 +255,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                   ),
                   side: BorderSide(
                     color: isSelected
-                        ? catColor
+                        ? catColor.withOpacity(0.4)
                         : theme.colorScheme.onSurface.withOpacity(0.1),
                     width: 1,
                   ),

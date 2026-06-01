@@ -785,4 +785,149 @@ void main() {
   mockFile.writeAsStringSync(updatedContent);
 
   print('=== Успешно: Обновлено $updatedCount направлений в mock_data.dart ===');
+
+  // ==========================================
+  // ЭТАП 5: Обновление минимальных баллов ЕГЭ
+  // ==========================================
+  print('\n-> Обновление минимальных баллов ЕГЭ...');
+  try {
+    final minScores = parseMinScores();
+    updateMinScoresInScoresScreen(minScores);
+  } catch (e) {
+    print('Ошибка при обновлении минимальных баллов: $e');
+  }
+}
+
+// --- Парсинг минимальных баллов ЕГЭ из PDF/TXT ---
+Map<String, int> parseMinScores() {
+  final Map<String, int> fallbackScores = {
+    'Математика (профиль)': 40,
+    'Русский язык': 40,
+    'Информатика': 46,
+    'Физика': 41,
+    'Обществознание': 45,
+    'История': 40,
+    'Иностранный язык': 40,
+    'Биология': 40,
+    'Химия': 40,
+    'Литература': 40,
+    'География': 40,
+    'Внутренний экзамен(ы)': 0,
+  };
+
+  final minBallsPdf = File('INFO/min_balls.pdf');
+  final minBallsTxt = File('INFO/min_balls.txt');
+
+  if (minBallsPdf.existsSync()) {
+    try {
+      final pdftotextPath = 'C:\\Users\\User\\AppData\\Local\\Temp\\poppler\\poppler-24.02.0\\Library\\bin\\pdftotext.exe';
+      if (File(pdftotextPath).existsSync()) {
+        Process.runSync(pdftotextPath, ['-layout', '-enc', 'UTF-8', minBallsPdf.path, minBallsTxt.path]);
+      } else {
+        Process.runSync('pdftotext', ['-layout', '-enc', 'UTF-8', minBallsPdf.path, minBallsTxt.path]);
+      }
+    } catch (e) {
+      print('Предупреждение: Не удалось запустить pdftotext для min_balls.pdf: $e');
+    }
+  }
+
+  if (!minBallsTxt.existsSync()) {
+    print('Файл INFO/min_balls.txt не найден, используем резервные минимальные баллы.');
+    return fallbackScores;
+  }
+
+  final content = minBallsTxt.readAsStringSync().toLowerCase();
+  
+  if (content.trim().isEmpty || !content.contains(RegExp(r'[а-яё]'))) {
+    print('Файл INFO/min_balls.txt пуст или не содержит текстового слоя (скан), используем резервные минимальные баллы.');
+    return fallbackScores;
+  }
+
+  print('-> Извлечение минимальных баллов из INFO/min_balls.txt...');
+  final Map<String, int> parsed = {};
+  
+  final subjectKeywords = {
+    'Математика (профиль)': ['математик'],
+    'Русский язык': ['русск'],
+    'Информатика': ['информатик', 'икт'],
+    'Физика': ['физик'],
+    'Обществознание': ['обществозн'],
+    'История': ['истори'],
+    'Иностранный язык': ['иностран', 'английск', 'немецк', 'французск', 'испанск'],
+    'Биология': ['биологи'],
+    'Химия': ['хими'],
+    'Литература': ['литератур'],
+    'География': ['географи'],
+    'Внутренний экзамен(ы)': ['внутрен', 'испытан', 'профессион', 'творческ'],
+  };
+
+  final lines = content.split(RegExp(r'\r?\n'));
+  
+  for (final entry in subjectKeywords.entries) {
+    final subjectName = entry.key;
+    final keywords = entry.value;
+    
+    int? foundScore;
+    
+    for (final line in lines) {
+      bool matchesKeywords = keywords.any((k) => line.contains(k));
+      if (matchesKeywords) {
+        final numRegex = RegExp(r'\b\d{2,3}\b');
+        final matches = numRegex.allMatches(line).toList();
+        if (matches.isNotEmpty) {
+          foundScore = int.tryParse(matches.last.group(0)!);
+          if (foundScore != null && foundScore >= 30 && foundScore <= 100) {
+            break;
+          }
+        }
+      }
+    }
+    
+    if (foundScore != null) {
+      parsed[subjectName] = foundScore;
+      print('   [ПАРСЕР] $subjectName -> $foundScore');
+    } else {
+      parsed[subjectName] = fallbackScores[subjectName]!;
+      print('   [РЕЗЕРВ] $subjectName -> ${fallbackScores[subjectName]} (не найден в тексте)');
+    }
+  }
+
+  return parsed;
+}
+
+// --- Обновление defaultMinScores в scores_screen.dart ---
+void updateMinScoresInScoresScreen(Map<String, int> minScores) {
+  final file = File('lib/screens/scores_screen.dart');
+  if (!file.existsSync()) {
+    print('Ошибка: Файл lib/screens/scores_screen.dart не найден!');
+    return;
+  }
+
+  var content = file.readAsStringSync();
+  
+  final regex = RegExp(
+    r'(final\s+defaultMinScores\s*=\s*\{)(.*?)(\};)',
+    dotAll: true,
+  );
+
+  final match = regex.firstMatch(content);
+  if (match != null) {
+    final buffer = StringBuffer();
+    buffer.writeln();
+    minScores.forEach((subject, score) {
+      buffer.writeln("      '$subject': $score,");
+    });
+    buffer.write('    ');
+    
+    content = content.replaceRange(
+      match.start + match.group(1)!.length,
+      match.end - match.group(3)!.length,
+      buffer.toString(),
+    );
+    
+    file.writeAsStringSync(content);
+    print('Успешно обновлены минимальные баллы в lib/screens/scores_screen.dart');
+  } else {
+    print('Ошибка: Не удалось найти defaultMinScores в lib/screens/scores_screen.dart');
+  }
 }

@@ -147,26 +147,14 @@ class _CampusesScreenState extends State<CampusesScreen> {
                     ],
                   ),
                 )
-              : LayoutBuilder(
-                  builder: (context, constraints) {
-                    const double listPaddingTop = 8.0;
-                    const double listPaddingBottom = 8.0;
-                    final double usableHeight = constraints.maxHeight - (listPaddingTop + listPaddingBottom);
-                    // В теме приложения margin у Card равен 8 сверху и 8 снизу (в сумме 16)
-                    // Чтобы ровно 5 карточек помещалось в видимую область до вкладки переключения:
-                    final double cardHeight = (usableHeight / 5) - 16.0;
-
-                    return ListView.builder(
-                      padding: const EdgeInsets.only(top: listPaddingTop, bottom: listPaddingBottom),
-                      itemCount: filteredCampuses.length,
-                      itemBuilder: (context, index) {
-                        final campus = filteredCampuses[index];
-                        return _CampusCard(
-                          campus: campus,
-                          searchQuery: _searchQuery,
-                          cardHeight: cardHeight,
-                        );
-                      },
+              : ListView.builder(
+                  padding: const EdgeInsets.only(top: 8, bottom: 24),
+                  itemCount: filteredCampuses.length,
+                  itemBuilder: (context, index) {
+                    final campus = filteredCampuses[index];
+                    return _CampusCard(
+                      campus: campus,
+                      searchQuery: _searchQuery,
                     );
                   },
                 ),
@@ -179,12 +167,10 @@ class _CampusesScreenState extends State<CampusesScreen> {
 class _CampusCard extends StatefulWidget {
   final Campus campus;
   final String searchQuery;
-  final double cardHeight;
 
   const _CampusCard({
     required this.campus,
     required this.searchQuery,
-    required this.cardHeight,
   });
 
   @override
@@ -247,7 +233,7 @@ class _CampusCardState extends State<_CampusCard> {
     final searchQuery = widget.searchQuery;
 
     final Widget cardWidget = Card(
-      key: Key('${campus.name}_expanded_$_isExpanded'),
+      key: Key('${campus.name}_expanded_${searchQuery.isNotEmpty}'),
       child: ExpansionTile(
         initiallyExpanded: _isExpanded,
         onExpansionChanged: (expanded) {
@@ -341,7 +327,7 @@ class _CampusCardState extends State<_CampusCard> {
           borderRadius: BorderRadius.all(Radius.circular(16)),
         ),
         iconColor: theme.colorScheme.primary,
-        collapsedIconColor: const Color(0xFF64748B),
+        collapsedIconColor: theme.colorScheme.secondary,
         children: [
           if (campus.faculties.isNotEmpty) ...[
             Container(
@@ -438,14 +424,7 @@ class _CampusCardState extends State<_CampusCard> {
       ),
     );
 
-    if (!_isExpanded) {
-      return SizedBox(
-        height: widget.cardHeight,
-        child: cardWidget,
-      );
-    } else {
-      return cardWidget;
-    }
+    return cardWidget;
   }
 }
 
@@ -531,6 +510,7 @@ class _FacultyTileState extends State<_FacultyTile> {
       ),
       child: Card(
         elevation: 0,
+        clipBehavior: Clip.antiAlias,
         color: theme.colorScheme.surface.withValues(alpha: 0.5),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),

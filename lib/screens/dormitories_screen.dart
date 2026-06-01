@@ -610,7 +610,6 @@ class _DormitoryFacultyRowState extends State<_DormitoryFacultyRow> {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       margin: const EdgeInsets.symmetric(vertical: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: _isHighlighted
             ? facColor.withOpacity(0.08)
@@ -632,38 +631,49 @@ class _DormitoryFacultyRowState extends State<_DormitoryFacultyRow> {
               ]
             : [],
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              widget.facultyName
-                  .replaceAll(RegExp(r'\s*\(.*?\)\s*'), '')
-                  .trim(),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface,
-              ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {},
+          onLongPress: () {},
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.facultyName
+                        .replaceAll(RegExp(r'\s*\(.*?\)\s*'), '')
+                        .trim(),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                  decoration: BoxDecoration(
+                    color: _isHighlighted
+                        ? facColor.withOpacity(0.2)
+                        : theme.colorScheme.secondary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    AppUtils.getPluralSpots(widget.spots),
+                    style: TextStyle(
+                      color: _isHighlighted ? facColor : theme.colorScheme.secondary,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-            decoration: BoxDecoration(
-              color: _isHighlighted
-                  ? facColor.withOpacity(0.2)
-                  : theme.colorScheme.secondary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              AppUtils.getPluralSpots(widget.spots),
-              style: TextStyle(
-                color: _isHighlighted ? facColor : theme.colorScheme.secondary,
-                fontSize: 11.5,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

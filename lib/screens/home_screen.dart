@@ -27,20 +27,18 @@ class _HomeScreenState extends State<HomeScreen>
   int _currentIndex = 0;
   late final PageController _pageController;
 
+  // Динамические ключи для сброса состояния экранов при переключении табов
+  Key _campusesKey = UniqueKey();
+  Key _dormitoriesKey = UniqueKey();
+  Key _activitiesKey = UniqueKey();
+  Key _faqKey = UniqueKey();
+
   // Animation controller and state for the premium cross-fade theme transition
   late final AnimationController _revealController;
   ui.Image? _screenshot;
   bool _animating = false;
 
   final GlobalKey _boundaryKey = GlobalKey();
-
-  final List<Widget> _screens = const [
-    CampusesScreen(),
-    DormitoriesScreen(),
-    ScoresScreen(),
-    ActivitiesScreen(),
-    FAQScreen(),
-  ];
 
   final List<String> _titles = const [
     'Корпуса и Кафедры',
@@ -59,6 +57,10 @@ class _HomeScreenState extends State<HomeScreen>
         final targetIndex = _pageController.page!.round();
         if (targetIndex != _currentIndex) {
           setState(() {
+            if (_currentIndex == 0 || targetIndex == 0) _campusesKey = UniqueKey();
+            if (_currentIndex == 1 || targetIndex == 1) _dormitoriesKey = UniqueKey();
+            if (_currentIndex == 3 || targetIndex == 3) _activitiesKey = UniqueKey();
+            if (_currentIndex == 4 || targetIndex == 4) _faqKey = UniqueKey();
             _currentIndex = targetIndex;
           });
         }
@@ -125,100 +127,120 @@ class _HomeScreenState extends State<HomeScreen>
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    Widget content = Scaffold(
-      appBar: AppBar(
-        title: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 150),
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
-          },
-          child: Text(
-            _titles[_currentIndex],
-            key: ValueKey<int>(_currentIndex),
-          ),
-        ),
-        actions: [
-          ThemeToggleButton(
-            isDark: isDark,
-            onPressed: _handleThemeToggle,
-          ),
-        ],
-      ),
-      body: PageView(
-        physics: const BouncingScrollPhysics(),
-        controller: _pageController,
-        onPageChanged: (index) {
-          // Индекс теперь обновляется плавно через listener в initState
-        },
-        children: _screens,
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
-              width: 1,
-            ),
-          ),
-        ),
-        child: Theme(
-          data: theme.copyWith(
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-            hoverColor: Colors.transparent,
-            splashFactory: NoSplash.splashFactory,
-          ),
-          child: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            selectedItemColor: const Color(0xFF8B5CF6),
-            unselectedItemColor: const Color(0xFF64748B),
-            selectedIconTheme: const IconThemeData(size: 28),
-            unselectedIconTheme: const IconThemeData(size: 22),
-            selectedLabelStyle: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
-            unselectedLabelStyle: const TextStyle(fontSize: 11),
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-              _pageController.animateToPage(
-                index,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
+    final List<Widget> screens = [
+      CampusesScreen(key: _campusesKey),
+      DormitoriesScreen(key: _dormitoriesKey),
+      const ScoresScreen(), // Сохраняет состояние при переключениях
+      ActivitiesScreen(key: _activitiesKey),
+      FAQScreen(key: _faqKey),
+    ];
+
+    Widget content = GestureDetector(
+      onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
+      },
+      behavior: HitTestBehavior.translucent,
+      child: Scaffold(
+        appBar: AppBar(
+          title: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 150),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: child,
               );
             },
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.account_balance),
-                activeIcon: Icon(Icons.account_balance),
-                label: 'Корпуса',
+            child: Text(
+              _titles[_currentIndex],
+              key: ValueKey<int>(_currentIndex),
+            ),
+          ),
+          actions: [
+            ThemeToggleButton(
+              isDark: isDark,
+              onPressed: _handleThemeToggle,
+            ),
+          ],
+        ),
+        body: PageView(
+          physics: const BouncingScrollPhysics(),
+          controller: _pageController,
+          onPageChanged: (index) {
+            // Индекс теперь обновляется плавно через listener в initState
+          },
+          children: screens,
+        ),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                width: 1,
               ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.hotel),
-                activeIcon: Icon(Icons.hotel),
-                label: 'Общежития',
+            ),
+          ),
+          child: Theme(
+            data: theme.copyWith(
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              splashFactory: NoSplash.splashFactory,
+            ),
+            child: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              selectedItemColor: const Color(0xFF8B5CF6),
+              unselectedItemColor: const Color(0xFF64748B),
+              selectedIconTheme: const IconThemeData(size: 28),
+              unselectedIconTheme: const IconThemeData(size: 22),
+              selectedLabelStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
               ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.leaderboard_outlined),
-                activeIcon: Icon(Icons.leaderboard),
-                label: 'Баллы ЕГЭ',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.diversity_3),
-                activeIcon: Icon(Icons.diversity_3),
-                label: 'Активности',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.help_outline),
-                activeIcon: Icon(Icons.help),
-                label: 'FAQ',
-              ),
-            ],
+              unselectedLabelStyle: const TextStyle(fontSize: 11),
+              onTap: (index) {
+                if (index != _currentIndex) {
+                  setState(() {
+                    if (_currentIndex == 0 || index == 0) _campusesKey = UniqueKey();
+                    if (_currentIndex == 1 || index == 1) _dormitoriesKey = UniqueKey();
+                    if (_currentIndex == 3 || index == 3) _activitiesKey = UniqueKey();
+                    if (_currentIndex == 4 || index == 4) _faqKey = UniqueKey();
+                    _currentIndex = index;
+                  });
+                }
+                _pageController.animateToPage(
+                  index,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              },
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.account_balance),
+                  activeIcon: Icon(Icons.account_balance),
+                  label: 'Корпуса',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.hotel),
+                  activeIcon: Icon(Icons.hotel),
+                  label: 'Общежития',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.leaderboard_outlined),
+                  activeIcon: Icon(Icons.leaderboard),
+                  label: 'Баллы ЕГЭ',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.diversity_3),
+                  activeIcon: Icon(Icons.diversity_3),
+                  label: 'Активности',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.help_outline),
+                  activeIcon: Icon(Icons.help),
+                  label: 'FAQ',
+                ),
+              ],
+            ),
           ),
         ),
       ),

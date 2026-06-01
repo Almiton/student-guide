@@ -40,9 +40,9 @@ android {
             if (apkOutput != null) {
                 val abi = apkOutput.filters.find { it.filterType == "ABI" }?.identifier
                 val newName = if (abi != null) {
-                    "GidStudenta_v${variant.versionName}_${abi}.apk"
+                    "StudentGuide_v${variant.versionName}_${abi}.apk"
                 } else {
-                    "GidStudenta_v${variant.versionName}.apk"
+                    "StudentGuide_v${variant.versionName}.apk"
                 }
                 apkOutput.outputFileName = newName
             }

@@ -56,6 +56,7 @@ class _StudentGuideAppState extends State<StudentGuideApp> {
         cardTheme: CardThemeData(
           color: Colors.white,
           elevation: 2,
+          clipBehavior: Clip.antiAlias,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: const BorderSide(color: Color(0xFFF1F5F9), width: 1),
@@ -113,6 +114,7 @@ class _StudentGuideAppState extends State<StudentGuideApp> {
         cardTheme: CardThemeData(
           color: const Color(0xFF1E1E38),
           elevation: 4,
+          clipBehavior: Clip.antiAlias,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),

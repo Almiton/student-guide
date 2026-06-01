@@ -57,6 +57,7 @@ class _ScoresScreenState extends State<ScoresScreen>
   }
 
   bool _showCalculator = false;
+  bool _showSortMenu = false;
   final Map<String, int> _userScores = {};
   final Set<String> _selectedSubjects = {};
   final List<AdmissionScore> _compareList = [];
@@ -92,18 +93,18 @@ class _ScoresScreenState extends State<ScoresScreen>
     _achievementsController = TextEditingController(text: '0');
 
     final defaultMinScores = {
-      'Математика (профиль)': 39,
+      'Математика (профиль)': 40,
       'Русский язык': 40,
-      'Информатика': 44,
-      'Физика': 39,
+      'Информатика': 46,
+      'Физика': 41,
       'Обществознание': 45,
-      'История': 35,
-      'Иностранный язык': 30,
-      'Биология': 39,
-      'Химия': 39,
+      'История': 40,
+      'Иностранный язык': 40,
+      'Биология': 40,
+      'Химия': 40,
       'Литература': 40,
       'География': 40,
-      'Внутренний экзамен(ы)': 40,
+      'Внутренний экзамен(ы)': 0,
     };
 
     final subjects = <String>{};
@@ -293,7 +294,6 @@ class _ScoresScreenState extends State<ScoresScreen>
                     min: minScore.toDouble(),
                     max: 100,
                     divisions: 100 - minScore,
-                    label: currentVal.toString(),
                     onChanged: (value) {
                       setState(() {
                         final int score = value.round();
@@ -406,7 +406,6 @@ class _ScoresScreenState extends State<ScoresScreen>
                     min: 0.0,
                     max: 10.0,
                     divisions: 10,
-                    label: _extraAchievementsScore.toString(),
                     onChanged: (value) {
                       setState(() {
                         _extraAchievementsScore = value.round();
@@ -475,7 +474,7 @@ class _ScoresScreenState extends State<ScoresScreen>
     );
   }
 
-  PopupMenuItem<String> _buildPopupMenuItem({
+  Widget _buildSortItem({
     required BuildContext context,
     required String value,
     required String title,
@@ -485,32 +484,51 @@ class _ScoresScreenState extends State<ScoresScreen>
     final isSelected = _sortBy == value;
     final activeColor = theme.colorScheme.primary;
 
-    return PopupMenuItem<String>(
-      value: value,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _sortBy = value;
+        });
+        _scrollToTop();
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: isSelected
+              ? activeColor.withValues(alpha: 0.08)
+              : Colors.transparent,
+          border: Border.all(
             color: isSelected
-                ? activeColor
-                : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-            size: 20,
+                ? activeColor.withValues(alpha: 0.25)
+                : Colors.transparent,
+            width: 1.5,
           ),
-          const SizedBox(width: 12),
-          Text(
-            title,
-            style: TextStyle(
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              color: isSelected ? activeColor : theme.colorScheme.onSurface,
-              fontSize: 14,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isSelected
+                  ? activeColor
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              size: 20,
             ),
-          ),
-          if (isSelected) ...[
             const SizedBox(width: 12),
-            Icon(Icons.check, color: activeColor, size: 18),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  color: isSelected ? activeColor : theme.colorScheme.onSurface,
+                  fontSize: 13,
+                ),
+              ),
+            ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -577,680 +595,689 @@ class _ScoresScreenState extends State<ScoresScreen>
       });
     }
 
-    return Stack(
-      children: [
-        Column(
-          children: [
-            // Search Bar, Calculator Toggle & Sorting Popup Row
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (value) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _showCalculator = false;
+          _showSortMenu = false;
+        });
+      },
+      behavior: HitTestBehavior.translucent,
+      child: Stack(
+        children: [
+          Column(
+            children: [
+              // Search Bar, Calculator Toggle & Sorting Popup Row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        onTap: () {
+                          setState(() {
+                            _showCalculator = false;
+                            _showSortMenu = false;
+                          });
+                        },
+                        onChanged: (value) {
+                          setState(() {
+                            _searchQuery = value;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Поиск направления или кода...',
+                          hintStyle: TextStyle(
+                            color: theme.textTheme.bodySmall?.color,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: theme.textTheme.bodySmall?.color,
+                          ),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(
+                                    Icons.clear,
+                                    color: theme.textTheme.bodySmall?.color,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _searchQuery = '';
+                                      _searchController.clear();
+                                    });
+                                  },
+                                )
+                              : null,
+                          filled: true,
+                          fillColor: theme.colorScheme.surface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.primary,
+                              width: 1.5,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                          ),
+                        ),
+                        style: TextStyle(color: theme.colorScheme.onSurface),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Calculator Toggle Button
+                    IconButton(
+                      style: IconButton.styleFrom(
+                        backgroundColor: _showCalculator
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.surface,
+                        foregroundColor: _showCalculator
+                            ? theme.colorScheme.onPrimary
+                            : theme.colorScheme.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.all(12),
+                      ),
+                      icon: const Icon(Icons.calculate_outlined),
+                      onPressed: () {
                         setState(() {
-                          _searchQuery = value;
+                          _showCalculator = !_showCalculator;
+                          if (_showCalculator) {
+                            _showSortMenu = false;
+                          }
                         });
                       },
-                      decoration: InputDecoration(
-                        hintText: 'Поиск направления или кода...',
-                        hintStyle: TextStyle(
-                          color: theme.textTheme.bodySmall?.color,
+                    ),
+                    const SizedBox(width: 8),
+                    // Sorting Button
+                    IconButton(
+                      style: IconButton.styleFrom(
+                        backgroundColor: _showSortMenu
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.surface,
+                        foregroundColor: _showSortMenu
+                            ? theme.colorScheme.onPrimary
+                            : theme.colorScheme.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        prefixIcon: Icon(
-                          Icons.search,
-                          color: theme.textTheme.bodySmall?.color,
-                        ),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(
-                                  Icons.clear,
-                                  color: theme.textTheme.bodySmall?.color,
+                        padding: const EdgeInsets.all(12),
+                      ),
+                      icon: const Icon(Icons.sort),
+                      onPressed: () {
+                        setState(() {
+                          _showSortMenu = !_showSortMenu;
+                          if (_showSortMenu) {
+                            _showCalculator = false;
+                          }
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              // Collapsible Calculator Panel with Sliders
+              if (_showCalculator)
+                GestureDetector(
+                  onTap: () {}, // Поглощает тапы внутри калькулятора
+                  behavior: HitTestBehavior.opaque,
+                  child: Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 8), // Увеличено до 8
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    'Калькулятор баллов ЕГЭ',
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  (() {
+                                    final calculatorTotal = _userScores.values.fold(0, (sum, val) => sum + val) + _extraAchievementsScore;
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        '$calculatorTotal баллов',
+                                        style: theme.textTheme.bodySmall?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                      ),
+                                    );
+                                  })(),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            height: 350, // Увеличено с 320 до 350
+                            child: ListView(
+                              children: [
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _scoreControllers.keys.map((subject) {
+                                    final isSelected = _selectedSubjects.contains(subject);
+                                    return InteractiveFeedback(
+                                      borderRadius: BorderRadius.circular(8),
+                                      activeBorderColor: theme.colorScheme.primary,
+                                      child: FilterChip(
+                                        label: Text(
+                                          subject,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: isSelected
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                            color: isSelected
+                                                ? theme.colorScheme.primary
+                                                : theme.colorScheme.onSurface,
+                                          ),
+                                        ),
+                                        selected: isSelected,
+                                        onSelected: (selected) {
+                                          if (subject == 'Русский язык') {
+                                            return; // Русский язык нельзя убрать
+                                          }
+                                          setState(() {
+                                            if (selected) {
+                                              _selectedSubjects.add(subject);
+                                              final minVal = _minScores[subject] ?? 40;
+                                              _userScores[subject] = minVal;
+                                              _scoreControllers[subject]?.text = minVal.toString();
+                                            } else {
+                                              _selectedSubjects.remove(subject);
+                                              _userScores.remove(subject);
+                                              _scoreControllers[subject]?.clear();
+                                            }
+                                          });
+                                          _scrollToTop();
+                                        },
+                                        selectedColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+                                        showCheckmark: false,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                          side: BorderSide(
+                                            color: isSelected
+                                                ? theme.colorScheme.primary
+                                                : theme.colorScheme.onSurface.withValues(alpha: 0.12),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                                const SizedBox(height: 12),
+                                const Divider(height: 1),
+                                const SizedBox(height: 12),
+                                if (_selectedSubjects.length < 3)
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.primary.withValues(alpha: 0.06),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.info_outline,
+                                          color: theme.colorScheme.primary,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            'Выберите как минимум 3 предмета ЕГЭ, чтобы указать баллы (${_selectedSubjects.length}/3)',
+                                            style: theme.textTheme.bodyMedium?.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                              color: theme.colorScheme.primary,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                else
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Укажите ваши баллы по предметам:',
+                                        style: theme.textTheme.bodyMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      ..._scoreControllers.keys
+                                          .where((s) => _selectedSubjects.contains(s))
+                                          .map((subject) => _buildSubjectRow(subject, theme)),
+                                      const Divider(height: 24),
+                                      _buildAchievementsRow(theme),
+                                    ],
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8), // Увеличено с 4 до 8
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    _searchQuery = '';
-                                    _searchController.clear();
+                                    _userScores.clear();
+                                    _selectedSubjects.clear();
+                                    for (final controller in _scoreControllers.values) {
+                                      controller.clear();
+                                    }
+                                    _extraAchievementsScore = 0;
+                                    _achievementsController.text = '0';
                                   });
                                 },
-                              )
-                            : null,
-                        filled: true,
-                        fillColor: theme.colorScheme.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: theme.colorScheme.primary,
-                            width: 1.5,
+                                child: const Text('Сбросить баллы'),
+                              ),
+                            ],
                           ),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                        ),
+                        ],
                       ),
-                      style: TextStyle(color: theme.colorScheme.onSurface),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // Calculator Toggle Button
-                  IconButton(
-                    style: IconButton.styleFrom(
-                      backgroundColor: _showCalculator
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.surface,
-                      foregroundColor: _showCalculator
-                          ? theme.colorScheme.onPrimary
-                          : theme.colorScheme.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.all(12),
-                    ),
-                    icon: const Icon(Icons.calculate_outlined),
-                    onPressed: () {
-                      setState(() {
-                        _showCalculator = !_showCalculator;
-                      });
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  // Sorting Menu
-                  Container(
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: PopupMenuButton<String>(
-                      icon: Icon(Icons.sort, color: theme.colorScheme.primary),
-                      tooltip: 'Сортировка',
-                      offset: const Offset(0, 48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.08,
-                          ),
-                          width: 1,
+                ),
+
+              // Faculty Selector
+              SingleChildScrollView(
+                controller: _facultyScrollController,
+                scrollDirection: Axis.horizontal,
+                clipBehavior: Clip.none,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    ..._faculties
+                        .where((faculty) {
+                          if (faculty == 'Все') return true;
+                          if (_selectedFaculty == faculty) return true;
+                          return _getSpecCountForFaculty(faculty) > 0;
+                        })
+                        .map((faculty) {
+                          final isSelected = _selectedFaculty == faculty;
+                          final facColor = AppUtils.getFacultyColor(faculty);
+                          final key = _facultyKeys.putIfAbsent(faculty, () => GlobalKey());
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: (_highlightedFaculty == faculty)
+                                    ? [
+                                        BoxShadow(
+                                          color: facColor.withValues(alpha: 0.65),
+                                          blurRadius: 10,
+                                          spreadRadius: 2,
+                                        )
+                                      ]
+                                    : null,
+                              ),
+                              child: ChoiceChip(
+                                key: key,
+                                showCheckmark: false,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                label: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      faculty ==
+                                              'Передовая инженерная школа «Российская электроника, инфокоммуникации и радиосвязь»'
+                                          ? 'ПИШ'
+                                          : faculty,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 5,
+                                        vertical: 1.5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? facColor.withValues(alpha: 0.15)
+                                            : theme.colorScheme.onSurface.withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                      child: Text(
+                                        '${_getSpecCountForFaculty(faculty)}',
+                                        style: TextStyle(
+                                          color: isSelected
+                                              ? (theme.brightness == Brightness.light
+                                                    ? Color.alphaBlend(
+                                                        Colors.black.withValues(alpha: 0.22),
+                                                        facColor,
+                                                      )
+                                                    : Color.alphaBlend(
+                                                        Colors.white.withValues(alpha: 0.22),
+                                                        facColor,
+                                                      ))
+                                              : theme.colorScheme.onSurface.withValues(alpha: 0.75),
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                selected: isSelected,
+                                onSelected: (selected) {
+                                  setState(() {
+                                    if (selected) {
+                                      _selectedFaculty = faculty;
+                                    } else {
+                                      _selectedFaculty = 'Все';
+                                    }
+                                  });
+                                  _scrollToTop();
+                                  _scrollToFaculty(_selectedFaculty);
+                                  _triggerFacultyFlash(faculty);
+                                },
+                                selectedColor: facColor.withValues(alpha: 0.08),
+                                labelStyle: TextStyle(
+                                  color: isSelected
+                                      ? facColor
+                                      : theme.textTheme.bodyMedium?.color,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                                side: BorderSide(
+                                  color: isSelected
+                                      ? facColor.withValues(alpha: 0.4)
+                                      : theme.colorScheme.onSurface.withValues(alpha: 0.1),
+                                  width: 1,
+                                ),
+                                backgroundColor: theme.colorScheme.surface,
+                              ),
+                            ),
+                          );
+                        }),
+                  ],
+                ),
+              ),
+
+              // Scores List
+              Expanded(
+                child: filteredScores.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.search_off,
+                              size: 48,
+                              color: theme.textTheme.bodySmall?.color,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Направления не найдены',
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: theme.textTheme.bodySmall?.color,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : NotificationListener<ScrollNotification>(
+                        onNotification: (notification) {
+                          if (notification is ScrollUpdateNotification &&
+                              (_showCalculator || _showSortMenu) &&
+                              notification.dragDetails != null) {
+                            setState(() {
+                              _showCalculator = false;
+                              _showSortMenu = false;
+                            });
+                          }
+                          return false;
+                        },
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.only(bottom: 80),
+                          itemCount: filteredScores.length,
+                          itemBuilder: (context, index) {
+                            final score = filteredScores[index];
+                            return AdmissionScoreCard(
+                              key: ValueKey(score.directionName),
+                              score: score,
+                              userTotal: _calculateUserTotalForDirection(score),
+                              hasUserScores: _userScores.isNotEmpty,
+                              isCompared: _compareList.contains(score),
+                              isFacultySelected: _selectedFaculty == score.facultyName,
+                              isFacultyHighlighted: _highlightedFaculty == score.facultyName,
+                              onCompareToggled: (selected) {
+                                setState(() {
+                                  if (selected) {
+                                    _compareList.add(score);
+                                  } else {
+                                    _compareList.remove(score);
+                                  }
+                                });
+                              },
+                              onFacultyPressed: () {
+                                setState(() {
+                                  if (_selectedFaculty == score.facultyName) {
+                                    _selectedFaculty = 'Все';
+                                  } else {
+                                    _selectedFaculty = score.facultyName;
+                                  }
+                                });
+                                _scrollToTop();
+                                _scrollToFaculty(_selectedFaculty);
+                                _triggerFacultyFlash(score.facultyName);
+                              },
+                            );
+                          },
                         ),
                       ),
-                      color: theme.colorScheme.surface,
-                      elevation: 6,
-                      onSelected: (value) {
-                        setState(() {
-                          _sortBy = value;
-                        });
-                        _scrollToTop();
-                      },
-                      itemBuilder: (context) => [
-                        _buildPopupMenuItem(
+              ),
+            ],
+          ),
+
+          // Custom Sort Dropdown Menu
+          if (_showSortMenu)
+            Positioned(
+              top: 64, // Сразу под строкой поиска
+              right: 16,
+              child: GestureDetector(
+                onTap: () {}, // Поглощает тапы внутри меню сортировки
+                behavior: HitTestBehavior.opaque,
+                child: Card(
+                  elevation: 6,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
+                      width: 1,
+                    ),
+                  ),
+                  color: theme.colorScheme.surface,
+                  child: Container(
+                    width: 240,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildSortItem(
                           context: context,
                           value: 'alphabet',
                           title: 'По умолчанию',
                           icon: Icons.sort_by_alpha,
                         ),
-                        const PopupMenuDivider(height: 1),
-                        _buildPopupMenuItem(
+                        const Divider(height: 1, indent: 8, endIndent: 8),
+                        _buildSortItem(
                           context: context,
                           value: 'scoreAsc',
                           title: 'Баллы: по возрастанию',
                           icon: Icons.trending_up,
                         ),
-                        _buildPopupMenuItem(
+                        _buildSortItem(
                           context: context,
                           value: 'scoreDesc',
                           title: 'Баллы: по убыванию',
                           icon: Icons.trending_down,
                         ),
-                        const PopupMenuDivider(height: 1),
-                        _buildPopupMenuItem(
+                        const Divider(height: 1, indent: 8, endIndent: 8),
+                        _buildSortItem(
                           context: context,
                           value: 'priceAsc',
                           title: 'Цена: по возрастанию',
-                          icon: Icons.arrow_downward,
+                          icon: Icons.arrow_upward,
                         ),
-                        _buildPopupMenuItem(
+                        _buildSortItem(
                           context: context,
                           value: 'priceDesc',
                           title: 'Цена: по убыванию',
-                          icon: Icons.arrow_upward,
+                          icon: Icons.arrow_downward,
                         ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
 
-            // Collapsible Calculator Panel with Sliders
-            if (_showCalculator)
-              Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    setState(() {
-                      _showCalculator = false;
-                    });
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+          // Floating Comparison Bottom Panel
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            bottom: _compareList.isNotEmpty ? 16 : -100,
+            left: 12,
+            right: 12,
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withValues(alpha: 0.95),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Выбрано: ${_compareList.length}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  'Калькулятор баллов ЕГЭ',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                (() {
-                                  final calculatorTotal = _userScores.values.fold(0, (sum, val) => sum + val) + _extraAchievementsScore;
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(
-                                        color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      '$calculatorTotal баллов',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: theme.colorScheme.primary,
-                                      ),
-                                    ),
-                                  );
-                                })(),
-                              ],
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _compareList.clear();
+                            });
+                          },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'Очистить',
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              fontSize: 13,
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Icon(
-                                Icons.keyboard_arrow_up,
-                                color: theme.colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          height: 320,
-                          child: ListView(
-                            children: [
-                              Text(
-                                'Предметы для расчета шансов поступления:',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.8,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: _scoreControllers.keys.map((subject) {
-                                  final isSelected = _selectedSubjects.contains(
-                                    subject,
-                                  );
-                                  return InteractiveFeedback(
-                                    borderRadius: BorderRadius.circular(8),
-                                    activeBorderColor:
-                                        theme.colorScheme.primary,
-                                    child: FilterChip(
-                                      label: Text(
-                                        subject,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: isSelected
-                                              ? FontWeight.bold
-                                              : FontWeight.normal,
-                                          color: isSelected
-                                              ? theme.colorScheme.primary
-                                              : theme.colorScheme.onSurface,
-                                        ),
-                                      ),
-                                      selected: isSelected,
-                                      onSelected: (selected) {
-                                        if (subject == 'Русский язык') {
-                                          return; // Русский язык нельзя убрать
-                                        }
-                                        setState(() {
-                                          if (selected) {
-                                            _selectedSubjects.add(subject);
-                                            final minVal =
-                                                _minScores[subject] ?? 40;
-                                            _userScores[subject] = minVal;
-                                            _scoreControllers[subject]?.text =
-                                                minVal.toString();
-                                          } else {
-                                            _selectedSubjects.remove(subject);
-                                            _userScores.remove(subject);
-                                            _scoreControllers[subject]?.clear();
-                                          }
-                                        });
-                                        _scrollToTop();
-                                      },
-                                      selectedColor: theme.colorScheme.primary
-                                          .withValues(alpha: 0.12),
-                                      checkmarkColor: theme.colorScheme.primary,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                        side: BorderSide(
-                                          color: isSelected
-                                              ? theme.colorScheme.primary
-                                              : theme.colorScheme.onSurface
-                                                    .withValues(alpha: 0.12),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                              const SizedBox(height: 12),
-                              const Divider(height: 1),
-                              const SizedBox(height: 12),
-                              if (_selectedSubjects.length < 3)
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withValues(
-                                      alpha: 0.06,
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: theme.colorScheme.primary
-                                          .withValues(alpha: 0.15),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.info_outline,
-                                        color: theme.colorScheme.primary,
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          'Выберите как минимум 3 предмета ЕГЭ, чтобы указать баллы (${_selectedSubjects.length}/3)',
-                                          style: theme.textTheme.bodyMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.w600,
-                                                color:
-                                                    theme.colorScheme.primary,
-                                                fontSize: 13,
-                                              ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              else
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Укажите ваши баллы по предметам:',
-                                      style: theme.textTheme.bodyMedium
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: theme.colorScheme.onSurface
-                                                .withValues(alpha: 0.8),
-                                          ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    ..._scoreControllers.keys
-                                        .where(
-                                          (s) => _selectedSubjects.contains(s),
-                                        )
-                                        .map(
-                                          (subject) =>
-                                              _buildSubjectRow(subject, theme),
-                                        ),
-                                    const Divider(height: 24),
-                                    _buildAchievementsRow(theme),
-                                  ],
-                                ),
-                            ],
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  _userScores.clear();
-                                  _selectedSubjects.clear();
-                                  for (final controller
-                                      in _scoreControllers.values) {
-                                    controller.clear();
-                                  }
-                                  _extraAchievementsScore = 0;
-                                  _achievementsController.text = '0';
-                                });
-                              },
-                              child: const Text('Сбросить баллы'),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ComparisonScreen(scores: _compareList),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ],
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Сравнить',
+                            style: TextStyle(fontSize: 13),
+                          ),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ),
-              ),
-
-            // Faculty Selector
-            SingleChildScrollView(
-              controller: _facultyScrollController,
-              scrollDirection: Axis.horizontal,
-              clipBehavior: Clip.none,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  ..._faculties
-                      .where((faculty) {
-                        if (faculty == 'Все') return true;
-                        if (_selectedFaculty == faculty) return true;
-                        return _getSpecCountForFaculty(faculty) > 0;
-                      })
-                      .map((faculty) {
-                        final isSelected = _selectedFaculty == faculty;
-                        final facColor = AppUtils.getFacultyColor(faculty);
-                        final key = _facultyKeys.putIfAbsent(faculty, () => GlobalKey());
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: (_highlightedFaculty == faculty)
-                                  ? [
-                                      BoxShadow(
-                                        color: facColor.withValues(alpha: 0.65),
-                                        blurRadius: 10,
-                                        spreadRadius: 2,
-                                      )
-                                    ]
-                                  : null,
-                            ),
-                            child: ChoiceChip(
-                              key: key,
-                              showCheckmark: false,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              label: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    faculty ==
-                                            'Передовая инженерная школа «Российская электроника, инфокоммуникации и радиосвязь»'
-                                        ? 'ПИШ'
-                                        : faculty,
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 5,
-                                      vertical: 1.5,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? facColor.withValues(alpha: 0.15)
-                                          : theme.colorScheme.onSurface
-                                                .withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                    child: Text(
-                                      '${_getSpecCountForFaculty(faculty)}',
-                                      style: TextStyle(
-                                        color: isSelected
-                                            ? (theme.brightness ==
-                                                      Brightness.light
-                                                  ? Color.alphaBlend(
-                                                      Colors.black.withValues(
-                                                        alpha: 0.22,
-                                                      ),
-                                                      facColor,
-                                                    )
-                                                  : Color.alphaBlend(
-                                                      Colors.white.withValues(
-                                                        alpha: 0.22,
-                                                      ),
-                                                      facColor,
-                                                    ))
-                                            : theme.colorScheme.onSurface
-                                                  .withValues(alpha: 0.75),
-                                        fontSize: 10.5,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              selected: isSelected,
-                              onSelected: (selected) {
-                                setState(() {
-                                  if (selected) {
-                                    _selectedFaculty = faculty;
-                                  } else {
-                                    _selectedFaculty = 'Все';
-                                  }
-                                });
-                                _scrollToTop();
-                                _scrollToFaculty(_selectedFaculty);
-                                _triggerFacultyFlash(faculty);
-                              },
-                              selectedColor: facColor.withValues(alpha: 0.2),
-                              labelStyle: TextStyle(
-                                color: isSelected
-                                    ? facColor
-                                    : theme.textTheme.bodyMedium?.color,
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                              side: BorderSide(
-                                color: isSelected
-                                    ? facColor
-                                    : theme.colorScheme.onSurface.withValues(
-                                        alpha: 0.1,
-                                      ),
-                                width: 1,
-                              ),
-                              backgroundColor: theme.colorScheme.surface,
-                            ),
-                          ),
-                        );
-                      }),
-                ],
-              ),
-            ),
-
-            // Scores List
-            Expanded(
-              child: filteredScores.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.search_off,
-                            size: 48,
-                            color: theme.textTheme.bodySmall?.color,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Направления не найдены',
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.textTheme.bodySmall?.color,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.only(bottom: 80),
-                      itemCount: filteredScores.length,
-                      itemBuilder: (context, index) {
-                        final score = filteredScores[index];
-                        return AdmissionScoreCard(
-                          key: ValueKey(score.directionName),
-                          score: score,
-                          userTotal: _calculateUserTotalForDirection(score),
-                          hasUserScores: _userScores.isNotEmpty,
-                          isCompared: _compareList.contains(score),
-                          isFacultySelected: _selectedFaculty == score.facultyName,
-                          isFacultyHighlighted: _highlightedFaculty == score.facultyName,
-                          onCompareToggled: (selected) {
-                            setState(() {
-                              if (selected) {
-                                _compareList.add(score);
-                              } else {
-                                _compareList.remove(score);
-                              }
-                            });
-                          },
-                          onFacultyPressed: () {
-                            setState(() {
-                              if (_selectedFaculty == score.facultyName) {
-                                _selectedFaculty = 'Все';
-                              } else {
-                                _selectedFaculty = score.facultyName;
-                              }
-                            });
-                            _scrollToTop();
-                            _scrollToFaculty(_selectedFaculty);
-                            _triggerFacultyFlash(score.facultyName);
-                          },
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
-
-        // Floating Comparison Bottom Panel
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
-          bottom: _compareList.isNotEmpty ? 16 : -100,
-          left: 12,
-          right: 12,
-          child: Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.95),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Выбрано: ${_compareList.length}',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _compareList.clear();
-                          });
-                        },
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Text(
-                          'Очистить',
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.6),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  ComparisonScreen(scores: _compareList),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: theme.colorScheme.onPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: const Text(
-                          'Сравнить',
-                          style: TextStyle(fontSize: 13),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
