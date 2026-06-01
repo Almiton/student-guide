@@ -255,58 +255,84 @@ class _CampusCardState extends State<_CampusCard> {
             _isExpanded = expanded;
           });
         },
-        tilePadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         title: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(
-              Icons.account_balance,
-              color: theme.colorScheme.primary,
-              size: 20,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                campus.name,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.3,
+            Padding(
+              padding: const EdgeInsets.only(top: 3, left: 10),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.25),
+                    width: 1.5,
+                  ),
+                ),
+                child: Icon(
+                  Icons.account_balance,
+                  color: theme.colorScheme.primary,
+                  size: 30,
                 ),
               ),
             ),
-          ],
-        ),
-        subtitle: InteractiveFeedback(
-          borderRadius: BorderRadius.circular(8),
-          activeBorderColor: theme.colorScheme.secondary,
-          child: InkWell(
-            onTap: () => AppUtils.openMapRoute(context, campus.address),
-            onLongPress: () => AppUtils.copyToClipboard(context, campus.address, 'Адрес'),
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
-              child: Row(
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.location_on_outlined,
-                    size: 20,
-                    color: theme.colorScheme.secondary,
+                  Text(
+                    campus.name,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.3,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      campus.address,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.secondary,
+                  const SizedBox(height: 6),
+                  InteractiveFeedback(
+                    borderRadius: BorderRadius.circular(8),
+                    activeBorderColor: theme.colorScheme.secondary,
+                    child: InkWell(
+                      onTap: () => AppUtils.openMapRoute(context, campus.address),
+                      onLongPress: () => AppUtils.copyToClipboard(context, campus.address, 'Адрес'),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 0),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.location_on_outlined,
+                              size: 16,
+                              color: theme.colorScheme.secondary,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                campus.address,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.secondary,
+                                  fontSize: 13,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
             ),
-          ),
+          ],
         ),
+        subtitle: null,
         childrenPadding: const EdgeInsets.all(12),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(16)),
