@@ -289,26 +289,32 @@ void main() {
   print('=== ЗАПУСК ОБЪЕДИНЕННОГО ПАРСЕРА ДАННЫХ ВГУ ===');
 
   // 1. Валидация входных файлов
-  final priceFile = File('PriceEducation2026.txt');
-  final freeFile = File('CountFree.txt');
-  final paidFile = File('CountPaid.txt');
-  final scoresDir = Directory('PDF_text');
+  // Примечание: запускать скрипт следует из корня проекта student_guide/
+  // Предварительно запустите bin/convert_pdfs.ps1 для генерации txt-файлов из PDF
+  final priceFile = File('data_sources/txt/admission/PriceEducation2026.txt');
+  final freeFile = File('data_sources/txt/admission/CountFree.txt');
+  final paidFile = File('data_sources/txt/admission/CountPaid2026.txt');
+  final scoresDir = Directory('data_sources/txt/scores');
   final mockFile = File('lib/data/mock_data.dart');
 
   if (!priceFile.existsSync()) {
-    print('Ошибка: Файл PriceEducation2026.txt не найден!');
+    print('Ошибка: Файл data_sources/txt/admission/PriceEducation2026.txt не найден!');
+    print('Подсказка: Запустите bin/convert_pdfs.ps1 для конвертации PDF в TXT.');
     return;
   }
   if (!freeFile.existsSync()) {
-    print('Ошибка: Файл CountFree.txt не найден!');
+    print('Ошибка: Файл data_sources/txt/admission/CountFree.txt не найден!');
+    print('Подсказка: Запустите bin/convert_pdfs.ps1 для конвертации PDF в TXT.');
     return;
   }
   if (!paidFile.existsSync()) {
-    print('Ошибка: Файл CountPaid.txt не найден!');
+    print('Ошибка: Файл data_sources/txt/admission/CountPaid2026.txt не найден!');
+    print('Подсказка: Запустите bin/convert_pdfs.ps1 для конвертации PDF в TXT.');
     return;
   }
   if (!scoresDir.existsSync()) {
-    print('Ошибка: Папка PDF_text не найдена!');
+    print('Ошибка: Папка data_sources/txt/scores не найдена!');
+    print('Подсказка: Запустите bin/convert_pdfs.ps1 для конвертации PDF в TXT.');
     return;
   }
   if (!mockFile.existsSync()) {
@@ -815,8 +821,8 @@ Map<String, int> parseMinScores() {
     'Внутренний экзамен(ы)': 0,
   };
 
-  final minBallsPdf = File('INFO/min_balls.pdf');
-  final minBallsTxt = File('INFO/min_balls.txt');
+  final minBallsPdf = File('data_sources/pdf/min_balls.pdf');
+  final minBallsTxt = File('data_sources/txt/min_balls.txt');
 
   if (minBallsPdf.existsSync()) {
     try {

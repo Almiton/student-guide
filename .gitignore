@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Временные текстовые файлы, генерируемые из PDF (data_sources/txt/)
+# Не должны попадать в репозиторий — генерируются автоматически через convert_pdfs.ps1
+/data_sources/txt/
