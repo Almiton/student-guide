@@ -26,19 +26,33 @@ class _ScoresScreenState extends State<ScoresScreen>
 
   void _scrollToFaculty(String faculty) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(milliseconds: 100), () {
+      void scrollAction(int attempt) {
         if (!mounted) return;
-        final context = _facultyKeys[faculty]?.currentContext;
+        if (faculty == 'Все') {
+          if (_facultyScrollController.hasClients) {
+            _facultyScrollController.animateTo(
+              0.0,
+              duration: const Duration(milliseconds: 320),
+              curve: Curves.easeInOutCubic,
+            );
+          }
+          return;
+        }
+        final key = _facultyKeys[faculty];
+        final context = key?.currentContext;
         if (context != null && context.mounted) {
-          // ignore: use_build_context_synchronously
           Scrollable.ensureVisible(
             context,
             duration: const Duration(milliseconds: 320),
             curve: Curves.easeInOutCubic,
             alignment: 0.0,
           );
+        } else if (attempt < 3) {
+          Future.delayed(const Duration(milliseconds: 100), () => scrollAction(attempt + 1));
         }
-      });
+      }
+
+      Future.delayed(const Duration(milliseconds: 100), () => scrollAction(1));
     });
   }
 
@@ -726,12 +740,16 @@ class _ScoresScreenState extends State<ScoresScreen>
               // Collapsible Calculator Panel with Sliders
               if (_showCalculator)
                 GestureDetector(
-                  onTap: () {}, // Поглощает тапы внутри калькулятора
+                  onTap: () {
+                    setState(() {
+                      _showCalculator = false;
+                    });
+                  }, // Закрывает калькулятор при тапе на свободные области
                   behavior: HitTestBehavior.opaque,
                   child: Card(
                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 8), // Увеличено до 8
+                      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -771,122 +789,120 @@ class _ScoresScreenState extends State<ScoresScreen>
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            height: 350, // Увеличено с 320 до 350
-                            child: ListView(
-                              children: [
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: _scoreControllers.keys.map((subject) {
-                                    final isSelected = _selectedSubjects.contains(subject);
-                                    return InteractiveFeedback(
-                                      borderRadius: BorderRadius.circular(8),
-                                      activeBorderColor: theme.colorScheme.primary,
-                                      child: FilterChip(
-                                        label: Text(
-                                          subject,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: isSelected
-                                                ? FontWeight.bold
-                                                : FontWeight.normal,
-                                            color: isSelected
-                                                ? theme.colorScheme.primary
-                                                : theme.colorScheme.onSurface,
-                                          ),
-                                        ),
-                                        selected: isSelected,
-                                        onSelected: (selected) {
-                                          if (subject == 'Русский язык') {
-                                            return; // Русский язык нельзя убрать
-                                          }
-                                          setState(() {
-                                            if (selected) {
-                                              _selectedSubjects.add(subject);
-                                              final minVal = _minScores[subject] ?? 40;
-                                              _userScores[subject] = minVal;
-                                              _scoreControllers[subject]?.text = minVal.toString();
-                                            } else {
-                                              _selectedSubjects.remove(subject);
-                                              _userScores.remove(subject);
-                                              _scoreControllers[subject]?.clear();
-                                            }
-                                          });
-                                          _scrollToTop();
-                                        },
-                                        selectedColor: theme.colorScheme.primary.withValues(alpha: 0.12),
-                                        showCheckmark: false,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                          side: BorderSide(
-                                            color: isSelected
-                                                ? theme.colorScheme.primary
-                                                : theme.colorScheme.onSurface.withValues(alpha: 0.12),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                                const SizedBox(height: 12),
-                                const Divider(height: 1),
-                                const SizedBox(height: 12),
-                                if (_selectedSubjects.length < 3)
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: theme.colorScheme.primary.withValues(alpha: 0.06),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: theme.colorScheme.primary.withValues(alpha: 0.15),
-                                      ),
+                          const SizedBox(height: 12),
+                          // Список предметов (чипы) отображается прямо во внешнем Column для адаптивной высоты
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: _scoreControllers.keys.map((subject) {
+                              final isSelected = _selectedSubjects.contains(subject);
+                              return InteractiveFeedback(
+                                borderRadius: BorderRadius.circular(8),
+                                activeBorderColor: theme.colorScheme.primary,
+                                child: FilterChip(
+                                  label: Text(
+                                    subject,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: isSelected
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.onSurface,
                                     ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.info_outline,
-                                          color: theme.colorScheme.primary,
-                                          size: 20,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Text(
-                                            'Выберите как минимум 3 предмета ЕГЭ, чтобы указать баллы (${_selectedSubjects.length}/3)',
-                                            style: theme.textTheme.bodyMedium?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                              color: theme.colorScheme.primary,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                else
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Укажите ваши баллы по предметам:',
-                                        style: theme.textTheme.bodyMedium?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      ..._scoreControllers.keys
-                                          .where((s) => _selectedSubjects.contains(s))
-                                          .map((subject) => _buildSubjectRow(subject, theme)),
-                                      const Divider(height: 24),
-                                      _buildAchievementsRow(theme),
-                                    ],
                                   ),
-                              ],
-                            ),
+                                  selected: isSelected,
+                                  onSelected: (selected) {
+                                    if (subject == 'Русский язык') {
+                                      return; // Русский язык нельзя убрать
+                                    }
+                                    setState(() {
+                                      if (selected) {
+                                        _selectedSubjects.add(subject);
+                                        final minVal = _minScores[subject] ?? 40;
+                                        _userScores[subject] = minVal;
+                                        _scoreControllers[subject]?.text = minVal.toString();
+                                      } else {
+                                        _selectedSubjects.remove(subject);
+                                        _userScores.remove(subject);
+                                        _scoreControllers[subject]?.clear();
+                                      }
+                                    });
+                                    _scrollToTop();
+                                  },
+                                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+                                  showCheckmark: false,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    side: BorderSide(
+                                      color: isSelected
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.onSurface.withValues(alpha: 0.12),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
                           ),
-                          const SizedBox(height: 8), // Увеличено с 4 до 8
+                          const SizedBox(height: 12),
+                          const Divider(height: 1),
+                          const SizedBox(height: 12),
+                          if (_selectedSubjects.length < 3)
+                            // Предупреждение также во внешнем Column для плотного облегания
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withValues(alpha: 0.06),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    color: theme.colorScheme.primary,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      'Выберите как минимум 3 предмета ЕГЭ, чтобы указать баллы (${_selectedSubjects.length}/3)',
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: theme.colorScheme.primary,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            // Ограничиваем SizedBox только скроллируемый список слайдеров ввода баллов
+                            SizedBox(
+                              height: 280, // Оптимальная высота для отображения слайдеров баллов со скроллом
+                              child: ListView(
+                                children: [
+                                  Text(
+                                    'Укажите ваши баллы по предметам:',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ..._scoreControllers.keys
+                                      .where((s) => _selectedSubjects.contains(s))
+                                      .map((subject) => _buildSubjectRow(subject, theme)),
+                                  const Divider(height: 24),
+                                  _buildAchievementsRow(theme),
+                                ],
+                              ),
+                            ),
+                          const SizedBox(height: 12),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
@@ -1123,6 +1139,7 @@ class _ScoresScreenState extends State<ScoresScreen>
                 behavior: HitTestBehavior.opaque,
                 child: Card(
                   elevation: 6,
+                  margin: EdgeInsets.zero,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                     side: BorderSide(
@@ -1473,7 +1490,7 @@ class _YearRouletteState extends State<YearRoulette> {
                 ),
                 controller: _scrollController,
                 itemCount: _yearsList.length,
-                clipBehavior: Clip.none,
+                clipBehavior: Clip.hardEdge,
                 padding: EdgeInsets.symmetric(horizontal: itemWidth),
                 itemBuilder: (context, index) {
                   final entry = _yearsList[index];

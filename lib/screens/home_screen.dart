@@ -27,11 +27,11 @@ class _HomeScreenState extends State<HomeScreen>
   int _currentIndex = 0;
   late final PageController _pageController;
 
-  // Динамические ключи для сброса состояния экранов при переключении табов
-  Key _campusesKey = UniqueKey();
-  Key _dormitoriesKey = UniqueKey();
-  Key _activitiesKey = UniqueKey();
-  Key _faqKey = UniqueKey();
+  // Стабильные ключи для экранов (ValueKey вместо PageStorageKey для сброса состояния)
+  final Key _campusesKey = const ValueKey('campuses');
+  final Key _dormitoriesKey = const ValueKey('dormitories');
+  final Key _activitiesKey = const ValueKey('activities');
+  final Key _faqKey = const ValueKey('faq');
 
   // Animation controller and state for the premium cross-fade theme transition
   late final AnimationController _revealController;
@@ -57,10 +57,6 @@ class _HomeScreenState extends State<HomeScreen>
         final targetIndex = _pageController.page!.round();
         if (targetIndex != _currentIndex) {
           setState(() {
-            if (_currentIndex == 0 || targetIndex == 0) _campusesKey = UniqueKey();
-            if (_currentIndex == 1 || targetIndex == 1) _dormitoriesKey = UniqueKey();
-            if (_currentIndex == 3 || targetIndex == 3) _activitiesKey = UniqueKey();
-            if (_currentIndex == 4 || targetIndex == 4) _faqKey = UniqueKey();
             _currentIndex = targetIndex;
           });
         }
@@ -200,10 +196,6 @@ class _HomeScreenState extends State<HomeScreen>
               onTap: (index) {
                 if (index != _currentIndex) {
                   setState(() {
-                    if (_currentIndex == 0 || index == 0) _campusesKey = UniqueKey();
-                    if (_currentIndex == 1 || index == 1) _dormitoriesKey = UniqueKey();
-                    if (_currentIndex == 3 || index == 3) _activitiesKey = UniqueKey();
-                    if (_currentIndex == 4 || index == 4) _faqKey = UniqueKey();
                     _currentIndex = index;
                   });
                 }

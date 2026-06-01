@@ -10,7 +10,8 @@ class ActivitiesScreen extends StatefulWidget {
   State<ActivitiesScreen> createState() => _ActivitiesScreenState();
 }
 
-class _ActivitiesScreenState extends State<ActivitiesScreen> {
+class _ActivitiesScreenState extends State<ActivitiesScreen>
+    with AutomaticKeepAliveClientMixin {
   String _selectedCategory = 'Все';
   late final List<String> _categories;
   String _searchQuery = '';
@@ -126,7 +127,11 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
   }
 
   @override
+  bool get wantKeepAlive => false;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
 
     final filteredActivities = mockActivities.where((act) {

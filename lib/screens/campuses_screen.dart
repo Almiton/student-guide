@@ -10,7 +10,8 @@ class CampusesScreen extends StatefulWidget {
   State<CampusesScreen> createState() => _CampusesScreenState();
 }
 
-class _CampusesScreenState extends State<CampusesScreen> {
+class _CampusesScreenState extends State<CampusesScreen>
+    with AutomaticKeepAliveClientMixin {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -21,7 +22,11 @@ class _CampusesScreenState extends State<CampusesScreen> {
   }
 
   @override
+  bool get wantKeepAlive => false;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
 
     final filteredCampuses = mockCampuses.where((campus) {
@@ -153,6 +158,7 @@ class _CampusesScreenState extends State<CampusesScreen> {
                   itemBuilder: (context, index) {
                     final campus = filteredCampuses[index];
                     return _CampusCard(
+                      key: ValueKey('${campus.name}_card'),
                       campus: campus,
                       searchQuery: _searchQuery,
                     );
@@ -169,6 +175,7 @@ class _CampusCard extends StatefulWidget {
   final String searchQuery;
 
   const _CampusCard({
+    super.key,
     required this.campus,
     required this.searchQuery,
   });
@@ -235,6 +242,7 @@ class _CampusCardState extends State<_CampusCard> {
     final Widget cardWidget = Card(
       key: Key('${campus.name}_expanded_${searchQuery.isNotEmpty}'),
       child: ExpansionTile(
+        key: ValueKey('${campus.name}_tile'),
         initiallyExpanded: _isExpanded,
         onExpansionChanged: (expanded) {
           setState(() {
@@ -344,6 +352,7 @@ class _CampusCardState extends State<_CampusCard> {
             ),
             const SizedBox(height: 8),
             ...campus.faculties.map((faculty) => _FacultyTile(
+                  key: ValueKey('${faculty.name}_tile_widget'),
                   faculty: faculty,
                   searchQuery: searchQuery,
                 )),
@@ -433,6 +442,7 @@ class _FacultyTile extends StatefulWidget {
   final String searchQuery;
 
   const _FacultyTile({
+    super.key,
     required this.faculty,
     required this.searchQuery,
   });
@@ -443,10 +453,12 @@ class _FacultyTile extends StatefulWidget {
 
 class _FacultyTileState extends State<_FacultyTile> {
   bool _isHighlighted = false;
+  late final PageStorageBucket _bucket;
 
   @override
   void initState() {
     super.initState();
+    _bucket = PageStorageBucket();
     final query = widget.searchQuery.toLowerCase().trim();
     if (query.isNotEmpty && _checkMatch(query)) {
       _triggerHighlight();
@@ -523,48 +535,52 @@ class _FacultyTileState extends State<_FacultyTile> {
         ),
         margin: const EdgeInsets.symmetric(vertical: 6),
         key: Key('${widget.faculty.name}_expanded_$shouldExpand'),
-        child: ExpansionTile(
-          initiallyExpanded: shouldExpand,
-          title: Text(
-            widget.faculty.name,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          iconColor: theme.colorScheme.secondary,
-          collapsedIconColor: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
-          childrenPadding: const EdgeInsets.all(12),
-          children: [
-            Text(
-              widget.faculty.description,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
-                height: 1.4,
+        child: PageStorage(
+          bucket: _bucket,
+          child: ExpansionTile(
+            key: ValueKey('${widget.faculty.name}_tile'),
+            initiallyExpanded: shouldExpand,
+            title: Text(
+              widget.faculty.name,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
               ),
             ),
-            const SizedBox(height: 12),
-            Divider(color: theme.dividerColor),
-            const SizedBox(height: 8),
-            Container(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Кафедры:',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                  letterSpacing: 0.5,
+            iconColor: theme.colorScheme.secondary,
+            collapsedIconColor: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+            childrenPadding: const EdgeInsets.all(12),
+            children: [
+              Text(
+                widget.faculty.description,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                  height: 1.4,
                 ),
               ),
-            ),
-            const SizedBox(height: 6),
-            ...widget.faculty.departments.map(
-              (dept) => _DepartmentItem(
-                department: dept,
-                searchQuery: widget.searchQuery,
+              const SizedBox(height: 12),
+              Divider(color: theme.dividerColor),
+              const SizedBox(height: 8),
+              Container(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Кафедры:',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 6),
+              ...widget.faculty.departments.map(
+                (dept) => _DepartmentItem(
+                  department: dept,
+                  searchQuery: widget.searchQuery,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

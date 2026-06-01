@@ -11,7 +11,8 @@ class DormitoriesScreen extends StatefulWidget {
   State<DormitoriesScreen> createState() => _DormitoriesScreenState();
 }
 
-class _DormitoriesScreenState extends State<DormitoriesScreen> {
+class _DormitoriesScreenState extends State<DormitoriesScreen>
+    with AutomaticKeepAliveClientMixin {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -22,7 +23,11 @@ class _DormitoriesScreenState extends State<DormitoriesScreen> {
   }
 
   @override
+  bool get wantKeepAlive => false;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
 
     final filteredDormitories = mockDormitories.where((dormitory) {
@@ -369,12 +374,8 @@ class _DormitoryCardState extends State<_DormitoryCard> {
             ),
             tilePadding: const EdgeInsets.symmetric(horizontal: 16),
             childrenPadding: const EdgeInsets.only(bottom: 16),
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.zero,
-            ),
-            collapsedShape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.zero,
-            ),
+            shape: const Border(),
+            collapsedShape: const Border(),
             iconColor: theme.colorScheme.primary,
             collapsedIconColor: theme.colorScheme.secondary,
             children: [
@@ -612,67 +613,54 @@ class _DormitoryFacultyRowState extends State<_DormitoryFacultyRow> {
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         color: _isHighlighted
-            ? facColor.withOpacity(0.08)
-            : theme.colorScheme.surface.withOpacity(0.5),
+            ? facColor.withOpacity(0.15)
+            : Colors.transparent, // Полностью прозрачный фон убирает темный прямоугольник
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: _isHighlighted
-              ? facColor
-              : theme.colorScheme.onSurface.withOpacity(0.08),
-          width: _isHighlighted ? 1.5 : 1.0,
-        ),
+        // Граница полностью убрана во всех состояниях для идеальной визуальной чистоты
         boxShadow: _isHighlighted
             ? [
                 BoxShadow(
-                  color: facColor.withOpacity(0.25),
-                  blurRadius: 6,
+                  color: facColor.withOpacity(0.3),
+                  blurRadius: 8,
                   spreadRadius: 1,
                 ),
               ]
             : [],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {},
-          onLongPress: () {},
-          borderRadius: BorderRadius.circular(10),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.facultyName
-                        .replaceAll(RegExp(r'\s*\(.*?\)\s*'), '')
-                        .trim(),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                  ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                widget.facultyName
+                    .replaceAll(RegExp(r'\s*\(.*?\)\s*'), '')
+                    .trim(),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurface,
                 ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                  decoration: BoxDecoration(
-                    color: _isHighlighted
-                        ? facColor.withOpacity(0.2)
-                        : theme.colorScheme.secondary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    AppUtils.getPluralSpots(widget.spots),
-                    style: TextStyle(
-                      color: _isHighlighted ? facColor : theme.colorScheme.secondary,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+              decoration: BoxDecoration(
+                color: _isHighlighted
+                    ? facColor.withOpacity(0.2)
+                    : theme.colorScheme.secondary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                AppUtils.getPluralSpots(widget.spots),
+                style: TextStyle(
+                  color: _isHighlighted ? facColor : theme.colorScheme.secondary,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
