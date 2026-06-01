@@ -1255,6 +1255,55 @@ class _ScoresScreenState extends State<ScoresScreen>
   }
 }
 
+class SnappingScrollPhysics extends ScrollPhysics {
+  final double itemWidth;
+
+  const SnappingScrollPhysics({required this.itemWidth, super.parent});
+
+  @override
+  SnappingScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return SnappingScrollPhysics(
+      itemWidth: itemWidth,
+      parent: buildParent(ancestor),
+    );
+  }
+
+  double _getTargetPixels(ScrollMetrics position, Tolerance tolerance, double velocity) {
+    double page = position.pixels / itemWidth;
+    if (velocity.abs() > tolerance.velocity) {
+      final double naturalTarget = position.pixels + velocity * 0.15;
+      page = (naturalTarget / itemWidth).roundToDouble();
+    } else {
+      page = page.roundToDouble();
+    }
+    final double maxPage = position.maxScrollExtent / itemWidth;
+    return page.clamp(0.0, maxPage) * itemWidth;
+  }
+
+  @override
+  Simulation? createBallisticSimulation(ScrollMetrics position, double velocity) {
+    if ((velocity <= 0.0 && position.pixels <= position.minScrollExtent) ||
+        (velocity >= 0.0 && position.pixels >= position.maxScrollExtent)) {
+      return super.createBallisticSimulation(position, velocity);
+    }
+    final Tolerance tolerance = toleranceFor(position);
+    final double target = _getTargetPixels(position, tolerance, velocity);
+    if (target != position.pixels) {
+      return ScrollSpringSimulation(
+        spring,
+        position.pixels,
+        target,
+        velocity,
+        tolerance: tolerance,
+      );
+    }
+    return null;
+  }
+
+  @override
+  bool get allowImplicitScrolling => false;
+}
+
 class YearRoulette extends StatefulWidget {
   final Map<int, int> passingScores;
 
@@ -1265,9 +1314,25 @@ class YearRoulette extends StatefulWidget {
 }
 
 class _YearRouletteState extends State<YearRoulette> {
-  late final PageController _pageController;
+  late final ScrollController _scrollController;
   late final List<MapEntry<int, int>> _yearsList;
   double _currentPage = 0.0;
+  double _itemWidth = 0.0;
+  bool _isInit = false;
+  Offset? _pointerDownPosition;
+  int? _pointerDownTime;
+
+  void _scrollBy(int offset) {
+    if (!mounted || _itemWidth <= 0) return;
+    final int targetPage = _currentPage.round() + offset;
+    final int boundedPage = targetPage.clamp(0, _yearsList.length - 1);
+    
+    _scrollController.animateTo(
+      boundedPage * _itemWidth,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOutCubic,
+    );
+  }
 
   @override
   void initState() {
@@ -1286,15 +1351,13 @@ class _YearRouletteState extends State<YearRoulette> {
         ? idx2025
         : (_yearsList.length > 1 ? _yearsList.length - 2 : 0);
     _currentPage = initialPage.toDouble();
-    _pageController = PageController(
-      viewportFraction: 0.33,
-      initialPage: initialPage,
-    );
+    _scrollController = ScrollController();
 
     int lastSnappedPage = initialPage;
-    _pageController.addListener(() {
-      if (mounted) {
-        final double page = _pageController.page ?? 0.0;
+    _scrollController.addListener(() {
+      if (mounted && _itemWidth > 0) {
+        final double offset = _scrollController.offset;
+        final double page = (offset / _itemWidth).clamp(0.0, _yearsList.length - 1.0);
         setState(() {
           _currentPage = page;
         });
@@ -1311,7 +1374,7 @@ class _YearRouletteState extends State<YearRoulette> {
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -1322,88 +1385,123 @@ class _YearRouletteState extends State<YearRoulette> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        return ShaderMask(
-          shaderCallback: (Rect bounds) {
-            return const LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                Colors.transparent,
-                Colors.black,
-                Colors.black,
-                Colors.transparent,
-              ],
-              stops: [0.0, 0.15, 0.85, 1.0],
-            ).createShader(bounds);
+        final width = constraints.maxWidth;
+        final itemWidth = width * 0.33;
+        _itemWidth = itemWidth;
+
+        // Выполняем jumpTo на начальную страницу один раз при первом рендере
+        if (!_isInit) {
+          _isInit = true;
+          final initialPage = _currentPage.round();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_scrollController.hasClients) {
+              _scrollController.jumpTo(initialPage * itemWidth);
+            }
+          });
+        }
+
+        return Listener(
+          onPointerDown: (PointerDownEvent event) {
+            _pointerDownPosition = event.position;
+            _pointerDownTime = DateTime.now().millisecondsSinceEpoch;
           },
-          blendMode: BlendMode.dstIn,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 30),
-            child: PageView.builder(
-              physics: const PageScrollPhysics(parent: BouncingScrollPhysics()),
-              controller: _pageController,
-              itemCount: _yearsList.length,
-              clipBehavior: Clip.none,
-              itemBuilder: (context, index) {
-                final entry = _yearsList[index];
-                final year = entry.key;
-                final score = entry.value;
+          onPointerUp: (PointerUpEvent event) {
+            if (_pointerDownPosition == null || _pointerDownTime == null) return;
+            final distance = (event.position - _pointerDownPosition!).distance;
+            final duration = DateTime.now().millisecondsSinceEpoch - _pointerDownTime!;
 
-                final double diff = (index - _currentPage).abs();
-                final double scale = (1.35 - (diff * 0.45)).clamp(0.75, 1.35);
-                final double opacity = (1.0 - (diff * 0.40)).clamp(0.6, 1.0);
-                final bool isCenter = diff < 0.5;
+            if (distance < 15 && duration < 250) {
+              final x = event.localPosition.dx;
+              if (x < width * 0.33) {
+                _scrollBy(-1);
+              } else if (x > width * 0.67) {
+                _scrollBy(1);
+              }
+            }
+            _pointerDownPosition = null;
+            _pointerDownTime = null;
+          },
+          child: ShaderMask(
+            shaderCallback: (Rect bounds) {
+              return const LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Colors.transparent,
+                  Colors.black,
+                  Colors.black,
+                  Colors.transparent,
+                ],
+                stops: [0.0, 0.15, 0.85, 1.0],
+              ).createShader(bounds);
+            },
+            blendMode: BlendMode.dstIn,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 30),
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                physics: SnappingScrollPhysics(
+                  itemWidth: itemWidth,
+                  parent: const BouncingScrollPhysics(),
+                ),
+                controller: _scrollController,
+                itemCount: _yearsList.length,
+                clipBehavior: Clip.none,
+                padding: EdgeInsets.symmetric(horizontal: itemWidth),
+                itemBuilder: (context, index) {
+                  final entry = _yearsList[index];
+                  final year = entry.key;
+                  final score = entry.value;
 
-                return Center(
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () {
-                      _pageController.animateToPage(
-                        index,
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeOutCubic,
-                      );
-                    },
-                    child: AnimatedScale(
-                      scale: scale,
-                      duration: const Duration(milliseconds: 150),
-                      child: AnimatedOpacity(
-                        opacity: opacity,
+                  final double diff = (index - _currentPage).abs();
+                  final double scale = (1.35 - (diff * 0.45)).clamp(0.75, 1.35);
+                  final double opacity = (1.0 - (diff * 0.40)).clamp(0.6, 1.0);
+                  final bool isCenter = diff < 0.5;
+
+                  return SizedBox(
+                    width: itemWidth,
+                    child: Center(
+                      child: AnimatedScale(
+                        scale: scale,
                         duration: const Duration(milliseconds: 150),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              year.toString(),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontSize: 12,
-                                fontWeight: isCenter
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                                color: isCenter
-                                    ? theme.colorScheme.secondary
-                                    : theme.textTheme.bodySmall?.color
-                                          ?.withValues(alpha: 0.6),
+                        child: AnimatedOpacity(
+                          opacity: opacity,
+                          duration: const Duration(milliseconds: 150),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                year.toString(),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontSize: 12,
+                                  fontWeight: isCenter
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: isCenter
+                                      ? theme.colorScheme.secondary
+                                      : theme.textTheme.bodySmall?.color
+                                            ?.withValues(alpha: 0.6),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              score == 0 ? '—' : score.toString(),
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: isCenter
-                                    ? theme.colorScheme.primary
-                                    : theme.textTheme.titleMedium?.color,
+                              const SizedBox(height: 2),
+                              Text(
+                                score == 0 ? '—' : score.toString(),
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: isCenter
+                                      ? theme.colorScheme.primary
+                                      : theme.textTheme.titleMedium?.color,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
         );

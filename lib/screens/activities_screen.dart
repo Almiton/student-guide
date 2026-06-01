@@ -15,6 +15,40 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
   late final List<String> _categories;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _categoryScrollController = ScrollController();
+  final Map<String, GlobalKey> _categoryKeys = {};
+
+  void _scrollToCategory(String category) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      void scrollAction(int attempt) {
+        if (!mounted) return;
+        if (category == 'Все') {
+          if (_categoryScrollController.hasClients) {
+            _categoryScrollController.animateTo(
+              0.0,
+              duration: const Duration(milliseconds: 320),
+              curve: Curves.easeInOutCubic,
+            );
+          }
+          return;
+        }
+        final key = _categoryKeys[category];
+        final context = key?.currentContext;
+        if (context != null && context.mounted) {
+          Scrollable.ensureVisible(
+            context,
+            duration: const Duration(milliseconds: 320),
+            curve: Curves.easeInOutCubic,
+            alignment: 0.0,
+          );
+        } else if (attempt < 3) {
+          Future.delayed(const Duration(milliseconds: 100), () => scrollAction(attempt + 1));
+        }
+      }
+
+      Future.delayed(const Duration(milliseconds: 100), () => scrollAction(1));
+    });
+  }
 
   @override
   void initState() {
@@ -29,6 +63,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _categoryScrollController.dispose();
     super.dispose();
   }
 
@@ -74,7 +109,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
         child: Row(
           children: [
             Icon(icon, size: 16, color: color),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 contact,
@@ -157,6 +192,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
         ),
         // Category Selector
         SingleChildScrollView(
+          controller: _categoryScrollController,
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
@@ -164,6 +200,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
               final isSelected = _selectedCategory == category;
               final catColor = _getCategoryColor(category);
               return Padding(
+                key: _categoryKeys.putIfAbsent(category, () => GlobalKey()),
                 padding: const EdgeInsets.only(right: 8),
                 child: ChoiceChip(
                   showCheckmark: false,
@@ -200,8 +237,10 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                     setState(() {
                       if (selected) {
                         _selectedCategory = category;
+                        _scrollToCategory(category);
                       } else {
                         _selectedCategory = 'Все';
+                        _scrollToCategory('Все');
                       }
                     });
                   },
@@ -263,25 +302,39 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: catColor.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: catColor.withOpacity(0.3),
-                                      width: 1,
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      if (_selectedCategory == activity.category) {
+                                        _selectedCategory = 'Все';
+                                        _scrollToCategory('Все');
+                                      } else {
+                                        _selectedCategory = activity.category;
+                                        _scrollToCategory(activity.category);
+                                      }
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
                                     ),
-                                  ),
-                                  child: Text(
-                                    activity.category,
-                                    style: TextStyle(
-                                      color: catColor,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
+                                    decoration: BoxDecoration(
+                                      color: catColor.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: catColor.withOpacity(0.3),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      activity.category,
+                                      style: TextStyle(
+                                        color: catColor,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -315,7 +368,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                                     size: 16,
                                     color: theme.textTheme.bodySmall?.color,
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
                                       activity.schedule!,

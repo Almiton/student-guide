@@ -30,18 +30,20 @@ class _DormitoriesScreenState extends State<DormitoriesScreen> {
       final query = _searchQuery.toLowerCase().trim();
 
       // Поиск по названию, адресу или описанию самого общежития
-      final matchesDorm = dormitory.name.toLowerCase().contains(query) ||
+      final matchesDorm =
+          dormitory.name.toLowerCase().contains(query) ||
           dormitory.address.toLowerCase().contains(query) ||
           dormitory.description.toLowerCase().contains(query);
       if (matchesDorm) return true;
 
       // Проверяем, есть ли места для этого факультета (с учетом сокращений!)
-      final hasFacultySpots = dormitory.facultySpots != null &&
+      final hasFacultySpots =
+          dormitory.facultySpots != null &&
           dormitory.facultySpots!.keys.any((key) {
             return AppUtils.matchFaculty(key, query) ||
-                   key.toLowerCase().contains(query) ||
-                   key.toLowerCase().contains('все факультеты') ||
-                   key.toLowerCase().contains('общее распределение');
+                key.toLowerCase().contains(query) ||
+                key.toLowerCase().contains('все факультеты') ||
+                key.toLowerCase().contains('общее распределение');
           });
 
       return hasFacultySpots;
@@ -60,9 +62,7 @@ class _DormitoriesScreenState extends State<DormitoriesScreen> {
             },
             decoration: InputDecoration(
               hintText: 'Поиск общежития, адреса или факультета...',
-              hintStyle: TextStyle(
-                color: theme.textTheme.bodySmall?.color,
-              ),
+              hintStyle: TextStyle(color: theme.textTheme.bodySmall?.color),
               prefixIcon: Icon(
                 Icons.search,
                 color: theme.textTheme.bodySmall?.color,
@@ -141,10 +141,7 @@ class _DormitoryCard extends StatefulWidget {
   final Dormitory dormitory;
   final String searchQuery;
 
-  const _DormitoryCard({
-    required this.dormitory,
-    required this.searchQuery,
-  });
+  const _DormitoryCard({required this.dormitory, required this.searchQuery});
 
   @override
   State<_DormitoryCard> createState() => _DormitoryCardState();
@@ -185,13 +182,17 @@ class _DormitoryCardState extends State<_DormitoryCard> {
     final theme = Theme.of(context);
     final dormitory = widget.dormitory;
     final query = widget.searchQuery.toLowerCase().trim();
-    final bool shouldExpand = query.isNotEmpty && dormitory.facultySpots != null &&
-        dormitory.facultySpots!.keys.any((key) =>
-            AppUtils.matchFaculty(key, query) ||
-            key.toLowerCase().contains(query));
+    final bool shouldExpand =
+        query.isNotEmpty &&
+        dormitory.facultySpots != null &&
+        dormitory.facultySpots!.keys.any(
+          (key) =>
+              AppUtils.matchFaculty(key, query) ||
+              key.toLowerCase().contains(query),
+        );
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,7 +208,7 @@ class _DormitoryCardState extends State<_DormitoryCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Container(
                       padding: const EdgeInsets.all(10),
@@ -220,7 +221,7 @@ class _DormitoryCardState extends State<_DormitoryCard> {
                         color: theme.colorScheme.secondary,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         dormitory.name,
@@ -257,7 +258,7 @@ class _DormitoryCardState extends State<_DormitoryCard> {
                             size: 18,
                             color: theme.colorScheme.secondary,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               dormitory.address,
@@ -298,7 +299,7 @@ class _DormitoryCardState extends State<_DormitoryCard> {
                               size: 18,
                               color: theme.colorScheme.primary,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 dormitory.phone!,
@@ -338,7 +339,7 @@ class _DormitoryCardState extends State<_DormitoryCard> {
                               size: 18,
                               color: theme.colorScheme.secondary,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 'Заведующая: ${dormitory.manager!}',
@@ -627,25 +628,16 @@ class _DormitoryFacultyRowState extends State<_DormitoryFacultyRow> {
                   color: facColor.withOpacity(0.25),
                   blurRadius: 6,
                   spreadRadius: 1,
-                )
+                ),
               ]
             : [],
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.school_outlined,
-            color: _isHighlighted ? facColor : theme.colorScheme.primary,
-            size: 20,
-          ),
-          const SizedBox(width: 10),
           Expanded(
             child: Text(
               widget.facultyName
-                  .replaceAll(
-                    RegExp(r'\s*\(.*?\)\s*'),
-                    '',
-                  )
+                  .replaceAll(RegExp(r'\s*\(.*?\)\s*'), '')
                   .trim(),
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
@@ -655,13 +647,10 @@ class _DormitoryFacultyRowState extends State<_DormitoryFacultyRow> {
           ),
           const SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: 2.5,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
             decoration: BoxDecoration(
-              color: _isHighlighted 
-                  ? facColor.withOpacity(0.2) 
+              color: _isHighlighted
+                  ? facColor.withOpacity(0.2)
                   : theme.colorScheme.secondary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(6),
             ),
@@ -679,4 +668,3 @@ class _DormitoryFacultyRowState extends State<_DormitoryFacultyRow> {
     );
   }
 }
-

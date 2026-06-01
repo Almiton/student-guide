@@ -147,14 +147,26 @@ class _CampusesScreenState extends State<CampusesScreen> {
                     ],
                   ),
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.only(top: 8, bottom: 24),
-                  itemCount: filteredCampuses.length,
-                  itemBuilder: (context, index) {
-                    final campus = filteredCampuses[index];
-                    return _CampusCard(
-                      campus: campus,
-                      searchQuery: _searchQuery,
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    const double listPaddingTop = 8.0;
+                    const double listPaddingBottom = 8.0;
+                    final double usableHeight = constraints.maxHeight - (listPaddingTop + listPaddingBottom);
+                    // В теме приложения margin у Card равен 8 сверху и 8 снизу (в сумме 16)
+                    // Чтобы ровно 5 карточек помещалось в видимую область до вкладки переключения:
+                    final double cardHeight = (usableHeight / 5) - 16.0;
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.only(top: listPaddingTop, bottom: listPaddingBottom),
+                      itemCount: filteredCampuses.length,
+                      itemBuilder: (context, index) {
+                        final campus = filteredCampuses[index];
+                        return _CampusCard(
+                          campus: campus,
+                          searchQuery: _searchQuery,
+                          cardHeight: cardHeight,
+                        );
+                      },
                     );
                   },
                 ),
@@ -164,53 +176,86 @@ class _CampusesScreenState extends State<CampusesScreen> {
   }
 }
 
-class _CampusCard extends StatelessWidget {
+class _CampusCard extends StatefulWidget {
   final Campus campus;
   final String searchQuery;
+  final double cardHeight;
 
   const _CampusCard({
     required this.campus,
     required this.searchQuery,
+    required this.cardHeight,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final query = searchQuery.toLowerCase().trim();
+  State<_CampusCard> createState() => _CampusCardState();
+}
 
-    // Проверяем совпадение по факультетам или кафедрам для авто-развертывания
-    final bool hasFacultyMatch = query.isNotEmpty && campus.faculties.any((faculty) =>
+class _CampusCardState extends State<_CampusCard> {
+  bool _isExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initExpandedState();
+  }
+
+  @override
+  void didUpdateWidget(_CampusCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.searchQuery != widget.searchQuery || oldWidget.campus != widget.campus) {
+      _initExpandedState();
+    }
+  }
+
+  void _initExpandedState() {
+    final query = widget.searchQuery.toLowerCase().trim();
+
+    final bool hasFacultyMatch = query.isNotEmpty && widget.campus.faculties.any((faculty) =>
         faculty.name.toLowerCase().contains(query) ||
         faculty.description.toLowerCase().contains(query) ||
         AppUtils.matchFaculty(faculty.name, query));
 
-    final bool hasDeptMatch = query.isNotEmpty && campus.faculties.any((faculty) =>
+    final bool hasDeptMatch = query.isNotEmpty && widget.campus.faculties.any((faculty) =>
         faculty.departments.any((dept) =>
             dept.name.toLowerCase().contains(query) ||
             (dept.description != null && dept.description!.toLowerCase().contains(query)) ||
             (dept.head != null && dept.head!.toLowerCase().contains(query)) ||
             AppUtils.matchDepartment(dept.name, query)));
 
-    final bool hasStructureMatch = query.isNotEmpty && campus.structures != null &&
-        campus.structures!.any((struct) => struct.toLowerCase().contains(query));
+    final bool hasStructureMatch = query.isNotEmpty && widget.campus.structures != null &&
+        widget.campus.structures!.any((struct) => struct.toLowerCase().contains(query));
 
-    final bool hasMuseumMatch = query.isNotEmpty && campus.museums != null &&
-        campus.museums!.any((mus) => mus.toLowerCase().contains(query));
+    final bool hasMuseumMatch = query.isNotEmpty && widget.campus.museums != null &&
+        widget.campus.museums!.any((mus) => mus.toLowerCase().contains(query));
 
-    final bool hasInfoMatch = query.isNotEmpty && campus.extraInfo != null &&
-        campus.extraInfo!.any((info) => info.toLowerCase().contains(query));
+    final bool hasInfoMatch = query.isNotEmpty && widget.campus.extraInfo != null &&
+        widget.campus.extraInfo!.any((info) => info.toLowerCase().contains(query));
 
-    final bool hasContactMatch = query.isNotEmpty && campus.extraContacts != null &&
-        campus.extraContacts!.entries.any((entry) =>
+    final bool hasContactMatch = query.isNotEmpty && widget.campus.extraContacts != null &&
+        widget.campus.extraContacts!.entries.any((entry) =>
             entry.key.toLowerCase().contains(query) ||
             entry.value.toLowerCase().contains(query));
 
-    final bool shouldExpand = hasFacultyMatch || hasDeptMatch || hasStructureMatch || hasMuseumMatch || hasInfoMatch || hasContactMatch;
+    _isExpanded = hasFacultyMatch || hasDeptMatch || hasStructureMatch || hasMuseumMatch || hasInfoMatch || hasContactMatch;
+  }
 
-    return Card(
-      key: Key('${campus.name}_expanded_$shouldExpand'),
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final campus = widget.campus;
+    final searchQuery = widget.searchQuery;
+
+    final Widget cardWidget = Card(
+      key: Key('${campus.name}_expanded_$_isExpanded'),
       child: ExpansionTile(
-        initiallyExpanded: shouldExpand,
+        initiallyExpanded: _isExpanded,
+        onExpansionChanged: (expanded) {
+          setState(() {
+            _isExpanded = expanded;
+          });
+        },
+        tilePadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         title: Row(
           children: [
             Icon(
@@ -218,7 +263,7 @@ class _CampusCard extends StatelessWidget {
               color: theme.colorScheme.primary,
               size: 20,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 campus.name,
@@ -238,7 +283,7 @@ class _CampusCard extends StatelessWidget {
             onLongPress: () => AppUtils.copyToClipboard(context, campus.address, 'Адрес'),
             borderRadius: BorderRadius.circular(8),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
               child: Row(
                 children: [
                   Icon(
@@ -246,7 +291,7 @@ class _CampusCard extends StatelessWidget {
                     size: 20,
                     color: theme.colorScheme.secondary,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       campus.address,
@@ -366,6 +411,15 @@ class _CampusCard extends StatelessWidget {
         ],
       ),
     );
+
+    if (!_isExpanded) {
+      return SizedBox(
+        height: widget.cardHeight,
+        child: cardWidget,
+      );
+    } else {
+      return cardWidget;
+    }
   }
 }
 
