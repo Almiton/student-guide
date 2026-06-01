@@ -186,32 +186,7 @@ class _ScoresScreenState extends State<ScoresScreen>
     super.dispose();
   }
 
-  int _getSpecCountForFaculty(String faculty) {
-    return mockAdmissionScores.where((score) {
-      final matchesSearch =
-          score.directionName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          AppUtils.matchFaculty(score.facultyName, _searchQuery);
 
-      final matchesFaculty = faculty == 'Все' || score.facultyName == faculty;
-
-      bool matchesCalculator = true;
-      if (_selectedSubjects.length >= 3) {
-        final userTotal = _calculateUserTotalForDirection(score);
-        if (userTotal == null) {
-          matchesCalculator = false;
-        } else {
-          final target = score.passingScores[2025] ?? 0;
-          if (target > 0 && userTotal < target) {
-            matchesCalculator = false;
-          }
-        }
-      }
-
-      return matchesSearch &&
-          matchesFaculty &&
-          matchesCalculator;
-    }).length;
-  }
 
   void _scrollToTop() {
     if (_scrollController.hasClients) {
@@ -554,13 +529,14 @@ class _ScoresScreenState extends State<ScoresScreen>
   Widget build(BuildContext context) {
     super.build(context);
     final theme = Theme.of(context);
+    final cleanQuery = _searchQuery.toLowerCase().trim();
 
-    final filteredScores = mockAdmissionScores.where((score) {
+    // 1. Фильтруем все специальности по поисковому запросу и предметам ЕГЭ (без привязки к факультету)
+    // Это позволяет за один проход O(N) собрать статистику по факультетам
+    final allFilteredScores = mockAdmissionScores.where((score) {
       final matchesSearch =
-          score.directionName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          AppUtils.matchFaculty(score.facultyName, _searchQuery);
-      final matchesFaculty =
-          _selectedFaculty == 'Все' || score.facultyName == _selectedFaculty;
+          score.directionName.toLowerCase().contains(cleanQuery) ||
+          AppUtils.matchFaculty(score.facultyName, cleanQuery);
 
       bool matchesCalculator = true;
       if (_selectedSubjects.length >= 3) {
@@ -575,12 +551,21 @@ class _ScoresScreenState extends State<ScoresScreen>
         }
       }
 
-      return matchesSearch &&
-          matchesFaculty &&
-          matchesCalculator;
+      return matchesSearch && matchesCalculator;
     }).toList();
 
-    // Apply sorting logic
+    // 2. Группируем и подсчитываем количество специальностей по факультетам за один проход O(N)
+    final Map<String, int> facultyCounts = {};
+    for (final score in allFilteredScores) {
+      facultyCounts[score.facultyName] = (facultyCounts[score.facultyName] ?? 0) + 1;
+    }
+
+    // 3. Теперь фильтруем по выбранному факультету
+    final filteredScores = _selectedFaculty == 'Все'
+        ? allFilteredScores
+        : allFilteredScores.where((score) => score.facultyName == _selectedFaculty).toList();
+
+    // 4. Применяем логику сортировки с оптимизацией кэширования цен
     if (_sortBy == 'alphabet') {
       filteredScores.sort((a, b) => a.directionName.compareTo(b.directionName));
     } else if (_sortBy == 'scoreAsc') {
@@ -595,17 +580,16 @@ class _ScoresScreenState extends State<ScoresScreen>
         final bScore = b.passingScores[2025] ?? 0;
         return bScore.compareTo(aScore);
       });
-    } else if (_sortBy == 'priceAsc') {
+    } else if (_sortBy == 'priceAsc' || _sortBy == 'priceDesc') {
+      // Кэшируем распарсенные цены локально, чтобы не производить регулярные выражения O(N log N) раз при сортировке
+      final Map<String, int> priceCache = {};
+      int getPrice(AdmissionScore score) {
+        return priceCache.putIfAbsent(score.directionName, () => _parsePrice(score.price));
+      }
       filteredScores.sort((a, b) {
-        final aPrice = _parsePrice(a.price);
-        final bPrice = _parsePrice(b.price);
-        return aPrice.compareTo(bPrice);
-      });
-    } else if (_sortBy == 'priceDesc') {
-      filteredScores.sort((a, b) {
-        final aPrice = _parsePrice(a.price);
-        final bPrice = _parsePrice(b.price);
-        return bPrice.compareTo(aPrice);
+        final aPrice = getPrice(a);
+        final bPrice = getPrice(b);
+        return _sortBy == 'priceAsc' ? aPrice.compareTo(bPrice) : bPrice.compareTo(aPrice);
       });
     }
 
@@ -945,7 +929,7 @@ class _ScoresScreenState extends State<ScoresScreen>
                         .where((faculty) {
                           if (faculty == 'Все') return true;
                           if (_selectedFaculty == faculty) return true;
-                          return _getSpecCountForFaculty(faculty) > 0;
+                          return (facultyCounts[faculty] ?? 0) > 0;
                         })
                         .map((faculty) {
                           final isSelected = _selectedFaculty == faculty;
@@ -995,7 +979,7 @@ class _ScoresScreenState extends State<ScoresScreen>
                                         borderRadius: BorderRadius.circular(5),
                                       ),
                                       child: Text(
-                                        '${_getSpecCountForFaculty(faculty)}',
+                                        '${faculty == 'Все' ? allFilteredScores.length : (facultyCounts[faculty] ?? 0)}',
                                         style: TextStyle(
                                           color: isSelected
                                               ? (theme.brightness == Brightness.light
