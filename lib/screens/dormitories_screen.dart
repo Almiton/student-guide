@@ -192,7 +192,7 @@ class _DormitoryCardState extends State<_DormitoryCard> {
         );
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,7 +202,7 @@ class _DormitoryCardState extends State<_DormitoryCard> {
               left: 16,
               right: 16,
               top: 16,
-              bottom: 8,
+              bottom: 6,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,7 +232,7 @@ class _DormitoryCardState extends State<_DormitoryCard> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 // Адрес
                 InteractiveFeedback(
                   borderRadius: BorderRadius.circular(8),
@@ -248,7 +248,7 @@ class _DormitoryCardState extends State<_DormitoryCard> {
                     borderRadius: BorderRadius.circular(8),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                        vertical: 4,
+                        vertical: 2.5,
                         horizontal: 2,
                       ),
                       child: Row(
@@ -274,7 +274,7 @@ class _DormitoryCardState extends State<_DormitoryCard> {
                 ),
                 // Телефон
                 if (dormitory.phone != null) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   InteractiveFeedback(
                     borderRadius: BorderRadius.circular(8),
                     activeBorderColor: theme.colorScheme.primary,
@@ -289,7 +289,7 @@ class _DormitoryCardState extends State<_DormitoryCard> {
                       borderRadius: BorderRadius.circular(8),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
-                          vertical: 4,
+                          vertical: 2.5,
                           horizontal: 2,
                         ),
                         child: Row(
@@ -316,7 +316,7 @@ class _DormitoryCardState extends State<_DormitoryCard> {
                 ],
                 // Заведующая
                 if (dormitory.manager != null) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   InteractiveFeedback(
                     borderRadius: BorderRadius.circular(8),
                     activeBorderColor: theme.colorScheme.secondary,
@@ -329,7 +329,7 @@ class _DormitoryCardState extends State<_DormitoryCard> {
                       borderRadius: BorderRadius.circular(8),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
-                          vertical: 4,
+                          vertical: 2.5,
                           horizontal: 2,
                         ),
                         child: Row(
