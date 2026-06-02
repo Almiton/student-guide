@@ -16,6 +16,28 @@ class _DormitoriesScreenState extends State<DormitoriesScreen>
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
+  // Список всех реальных факультетов университета для сопоставления
+  static const List<String> _realFaculties = [
+    'ФКН',
+    'ПММ',
+    'Экономический',
+    'Юридический',
+    'Журналистики',
+    'РГФ',
+    'Исторический',
+    'Физический',
+    'Химический',
+    'Математический',
+    'Геологический',
+    'Медико-биологический',
+    'Фармацевтический',
+    'Филологический',
+    'Философии и психологии',
+    'Географии и туризма',
+    'ФМО',
+    'Передовая инженерная школа «Российская электроника, инфокоммуникации и радиосвязь»'
+  ];
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -34,24 +56,57 @@ class _DormitoriesScreenState extends State<DormitoriesScreen>
       if (_searchQuery.isEmpty) return true;
       final query = _searchQuery.toLowerCase().trim();
 
-      // Поиск по названию, адресу или описанию самого общежития
-      final matchesDorm =
+      // 1. Поиск по базовой информации: название, адрес, описание, телефон или заведующая
+      final matchesBasicInfo =
           dormitory.name.toLowerCase().contains(query) ||
           dormitory.address.toLowerCase().contains(query) ||
-          dormitory.description.toLowerCase().contains(query);
-      if (matchesDorm) return true;
+          dormitory.description.toLowerCase().contains(query) ||
+          (dormitory.phone != null && dormitory.phone!.toLowerCase().contains(query)) ||
+          (dormitory.manager != null && dormitory.manager!.toLowerCase().contains(query));
 
-      // Проверяем, есть ли места для этого факультета (с учетом сокращений!)
-      final hasFacultySpots =
-          dormitory.facultySpots != null &&
-          dormitory.facultySpots!.keys.any((key) {
-            return AppUtils.matchFaculty(key, query) ||
-                key.toLowerCase().contains(query) ||
-                key.toLowerCase().contains('все факультеты') ||
-                key.toLowerCase().contains('общее распределение');
-          });
+      if (matchesBasicInfo) return true;
 
-      return hasFacultySpots;
+      // 2. Поиск по ценам и формам обучения
+      if (dormitory.prices != null) {
+        final matchesPrices = dormitory.prices!.entries.any((entry) =>
+            entry.key.toLowerCase().contains(query) ||
+            entry.value.toLowerCase().contains(query));
+        if (matchesPrices) return true;
+      }
+
+      // 3. Поиск по распределению мест: факультеты, ремонт, резерв, число мест
+      if (dormitory.facultySpots != null) {
+        final matchesSpots = dormitory.facultySpots!.entries.any((entry) {
+          final key = entry.key; // факультет / категория
+          final spots = entry.value; // число мест
+
+          // Проверяем текстовое совпадение категории или числа мест
+          if (key.toLowerCase().contains(query) || spots.toString() == query) {
+            return true;
+          }
+
+          // Проверяем совпадение по конкретному факультету (включая сокращения)
+          if (AppUtils.matchFaculty(key, query)) {
+            return true;
+          }
+
+          // Особая обработка "Все факультеты" для исключения ложных срабатываний
+          if (key.toLowerCase().contains('все факультеты')) {
+            // Проверяем, совпадает ли поисковый запрос с каким-либо из реальных факультетов
+            final isSearchingRealFaculty = _realFaculties.any((fac) =>
+                AppUtils.matchFaculty(fac, query) || fac.toLowerCase().contains(query));
+            if (isSearchingRealFaculty) {
+              return true;
+            }
+          }
+
+          return false;
+        });
+
+        if (matchesSpots) return true;
+      }
+
+      return false;
     }).toList();
 
     return Column(

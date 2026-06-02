@@ -464,56 +464,43 @@ class _HomeScreenState extends State<HomeScreen>
       behavior: HitTestBehavior.translucent,
       child: Scaffold(
         appBar: AppBar(
-          leading: Padding(
-            padding: const EdgeInsets.only(left: 12, top: 8, bottom: 8),
-            child: Center(
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => _showAboutAppDialog(context),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E1E38) : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : const Color(0xFFE2E8F0),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(
-                            alpha: isDark ? 0.2 : 0.05,
-                          ),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.info_rounded,
-                      color: isDark
-                          ? const Color(0xFFC084FC)
-                          : const Color(0xFF8B5CF6),
-                      size: 22,
-                    ),
-                  ),
-                ),
-              ),
+          // Заголовок всегда по центру; FittedBox масштабирует текст если он длинный
+          centerTitle: true,
+          leading: IconButton(
+            icon: Icon(
+              Icons.info_rounded,
+              color: isDark
+                  ? const Color(0xFFC084FC)
+                  : const Color(0xFF8B5CF6),
+              size: 22,
             ),
+            onPressed: () => _showAboutAppDialog(context),
           ),
           title: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 150),
+            duration: const Duration(milliseconds: 200),
+            reverseDuration: const Duration(milliseconds: 200),
             transitionBuilder: (Widget child, Animation<double> animation) {
-              return FadeTransition(opacity: animation, child: child);
+              // Одинаковый fade + лёгкий сдвиг снизу для всех вкладок
+              final slide = Tween<Offset>(
+                begin: const Offset(0, 0.15),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              ));
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(position: slide, child: child),
+              );
             },
-            child: Text(
-              _titles[_currentIndex],
+            child: FittedBox(
               key: ValueKey<int>(_currentIndex),
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.center,
+              child: Text(
+                _titles[_currentIndex],
+                maxLines: 1,
+              ),
             ),
           ),
           actions: [
