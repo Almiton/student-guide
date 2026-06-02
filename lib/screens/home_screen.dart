@@ -321,7 +321,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     onTap: () {
                                       AppUtils.openContact(
                                         context,
-                                        'https://github.com/Almiton/student_guide',
+                                        'https://github.com/Almiton/student-guide',
                                       );
                                     },
                                     child: Container(
