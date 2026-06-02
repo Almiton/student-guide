@@ -2,11 +2,13 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'dart:math' as math;
+import 'package:package_info_plus/package_info_plus.dart';
 import 'campuses_screen.dart';
 import 'dormitories_screen.dart';
 import 'activities_screen.dart';
 import 'faq_screen.dart';
 import 'scores_screen.dart';
+import '../utils/app_utils.dart';
 
 class HomeScreen extends StatefulWidget {
   final ThemeMode themeMode;
@@ -48,9 +50,29 @@ class _HomeScreenState extends State<HomeScreen>
     'Вопросы и Ответы',
   ];
 
+  String _appVersion = '...';
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final PackageInfo packageInfo = await PackageInfo.fromPlatform();
+      if (mounted) {
+        setState(() {
+          _appVersion = packageInfo.version;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _appVersion = '1.3.2'; // Дефолтное значение
+        });
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _loadAppVersion();
     _pageController = PageController(initialPage: _currentIndex);
     _pageController.addListener(() {
       if (_pageController.hasClients && _pageController.page != null) {
@@ -83,6 +105,310 @@ class _HomeScreenState extends State<HomeScreen>
     _revealController.dispose();
     _screenshot?.dispose();
     super.dispose();
+  }
+
+  void _showAboutAppDialog(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'AboutDialog',
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) {
+        return const SizedBox.shrink();
+      },
+      transitionBuilder: (context, anim1, anim2, child) {
+        final scale = Tween<double>(
+          begin: 0.9,
+          end: 1.0,
+        ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOutBack));
+        final opacity = Tween<double>(
+          begin: 0.0,
+          end: 1.0,
+        ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOut));
+
+        return FadeTransition(
+          opacity: opacity,
+          child: ScaleTransition(
+            scale: scale,
+            child: BackdropFilter(
+              filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Dialog(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.85,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: isDark
+                          ? [
+                              const Color(0xFF1E1E38).withValues(alpha: 0.85),
+                              const Color(0xFF16162A).withValues(alpha: 0.85),
+                            ]
+                          : [
+                              Colors.white.withValues(alpha: 0.9),
+                              const Color(0xFFF1F5F9).withValues(alpha: 0.9),
+                            ],
+                    ),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.black.withValues(alpha: 0.05),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.3 : 0.1,
+                        ),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: Stack(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 32,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 90,
+                                height: 90,
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFF7C3AED,
+                                      ).withValues(alpha: 0.25),
+                                      blurRadius: 16,
+                                      offset: const Offset(0, 6),
+                                    ),
+                                  ],
+                                  border: Border.all(
+                                    color: const Color(
+                                      0xFF7C3AED,
+                                    ).withValues(alpha: 0.1),
+                                    width: 2,
+                                  ),
+                                ),
+                                child: Image.asset(
+                                  'assets/images/app_icon.png',
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                'Гид студента',
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Версия $_appVersion',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.5)
+                                      : Colors.black.withValues(alpha: 0.5),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Divider(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.1)
+                                    : Colors.black.withValues(alpha: 0.08),
+                                height: 1,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Разработчик:',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.6)
+                                      : Colors.black.withValues(alpha: 0.6),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 48,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(16),
+                                    onTap: () {
+                                      AppUtils.openContact(
+                                        context,
+                                        'https://github.com/Almiton',
+                                      );
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: isDark
+                                            ? Colors.white.withValues(
+                                                alpha: 0.04,
+                                              )
+                                            : Colors.black.withValues(
+                                                alpha: 0.03,
+                                              ),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: isDark
+                                              ? Colors.white.withValues(
+                                                  alpha: 0.06,
+                                                )
+                                              : Colors.black.withValues(
+                                                  alpha: 0.05,
+                                                ),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.terminal,
+                                            size: 20,
+                                            color: isDark
+                                                ? Colors.white
+                                                : Colors.black,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Daniil Khan',
+                                            style: theme.textTheme.bodyMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          const SizedBox(width: 20),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 48,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(16),
+                                    onTap: () {
+                                      AppUtils.openContact(
+                                        context,
+                                        'https://github.com/Almiton/student_guide',
+                                      );
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: isDark
+                                            ? Colors.white.withValues(
+                                                alpha: 0.04,
+                                              )
+                                            : Colors.black.withValues(
+                                                alpha: 0.03,
+                                              ),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: isDark
+                                              ? Colors.white.withValues(
+                                                  alpha: 0.06,
+                                                )
+                                              : Colors.black.withValues(
+                                                  alpha: 0.05,
+                                                ),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.code,
+                                            size: 20,
+                                            color: isDark
+                                                ? Colors.white
+                                                : Colors.black,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Проект на GitHub',
+                                            style: theme.textTheme.bodyMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          const SizedBox(width: 20),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 28),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 48,
+                                child: ElevatedButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: isDark
+                                        ? const Color(0xFF7C3AED)
+                                        : const Color(0xFF8B5CF6),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Отлично',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _handleThemeToggle() async {
@@ -138,13 +464,52 @@ class _HomeScreenState extends State<HomeScreen>
       behavior: HitTestBehavior.translucent,
       child: Scaffold(
         appBar: AppBar(
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 12, top: 8, bottom: 8),
+            child: Center(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => _showAboutAppDialog(context),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E1E38) : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : const Color(0xFFE2E8F0),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.2 : 0.05,
+                          ),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.info_rounded,
+                      color: isDark
+                          ? const Color(0xFFC084FC)
+                          : const Color(0xFF8B5CF6),
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
           title: AnimatedSwitcher(
             duration: const Duration(milliseconds: 150),
             transitionBuilder: (Widget child, Animation<double> animation) {
-              return FadeTransition(
-                opacity: animation,
-                child: child,
-              );
+              return FadeTransition(opacity: animation, child: child);
             },
             child: Text(
               _titles[_currentIndex],
@@ -152,10 +517,7 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
           actions: [
-            ThemeToggleButton(
-              isDark: isDark,
-              onPressed: _handleThemeToggle,
-            ),
+            ThemeToggleButton(isDark: isDark, onPressed: _handleThemeToggle),
           ],
         ),
         body: PageView(
@@ -329,10 +691,7 @@ class _ThemeToggleButtonState extends State<ThemeToggleButton>
           onPressed: widget.onPressed,
           icon: CustomPaint(
             size: const Size(26, 26),
-            painter: SunMoonPainter(
-              progress: progress,
-              color: iconColor,
-            ),
+            painter: SunMoonPainter(progress: progress, color: iconColor),
           ),
         );
       },
@@ -344,10 +703,7 @@ class SunMoonPainter extends CustomPainter {
   final double progress;
   final Color color;
 
-  SunMoonPainter({
-    required this.progress,
-    required this.color,
-  });
+  SunMoonPainter({required this.progress, required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -383,7 +739,8 @@ class SunMoonPainter extends CustomPainter {
       }
 
       if (rayProgress > 0.0) {
-        final double angle = -3.141592653589793 / 2 + i * (3.141592653589793 / 4);
+        final double angle =
+            -3.141592653589793 / 2 + i * (3.141592653589793 / 4);
         final double startR = R + 2.5;
         final double maxRayLen = maxR - startR - 0.5;
         final double rayLen = maxRayLen * rayProgress;
@@ -406,10 +763,16 @@ class SunMoonPainter extends CustomPainter {
     final double maskDy = -R * (2.0 - 1.75 * progress);
     final Offset maskCenter = Offset(center.dx + maskDx, center.dy + maskDy);
 
-    final Path sunPath = Path()..addOval(Rect.fromCircle(center: center, radius: R));
-    final Path maskPath = Path()..addOval(Rect.fromCircle(center: maskCenter, radius: R));
+    final Path sunPath = Path()
+      ..addOval(Rect.fromCircle(center: center, radius: R));
+    final Path maskPath = Path()
+      ..addOval(Rect.fromCircle(center: maskCenter, radius: R));
 
-    final Path moonPath = Path.combine(PathOperation.difference, sunPath, maskPath);
+    final Path moonPath = Path.combine(
+      PathOperation.difference,
+      sunPath,
+      maskPath,
+    );
 
     canvas.drawPath(moonPath, bodyPaint);
 
@@ -431,4 +794,3 @@ class SunMoonPainter extends CustomPainter {
     return oldDelegate.progress != progress || oldDelegate.color != color;
   }
 }
-
