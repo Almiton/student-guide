@@ -92,11 +92,11 @@ class _SplashScreenState extends State<SplashScreen>
     return Scaffold(
       body: Stack(
         children: [
-          // Solid base layer to avoid black background underneath during animation
+          // Сплошной базовый слой, чтобы избежать черного фона под ним во время анимации
           Container(
             color: isDark ? const Color(0xFF0F0F1A) : const Color(0xFFF8FAFC),
           ),
-          // Pulsing gradient background layer with ambient glows
+          // Пульсирующий градиентный фоновый слой с мягким свечением
           AnimatedBuilder(
             animation: _pulseAnimation,
             builder: (context, child) {
@@ -123,7 +123,7 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ),
                     ),
-                    // Background ambient glow (subtle circle)
+                    // Мягкое фоновое свечение (аккуратный круг)
                     Positioned(
                       top: -100,
                       right: -100,
@@ -167,7 +167,7 @@ class _SplashScreenState extends State<SplashScreen>
               );
             },
           ),
-          // Center Content (Logo only, with breathing scale/opacity animation)
+          // Центральное содержимое (только логотип, с «дышащей» анимацией масштаба и прозрачности)
           Center(
             child: AnimatedBuilder(
               animation: Listenable.merge([

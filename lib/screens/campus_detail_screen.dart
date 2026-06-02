@@ -84,7 +84,7 @@ class CampusDetailScreen extends StatelessWidget {
           ),
           SliverList(
             delegate: SliverChildListDelegate([
-              // Address Card
+              // Карточка адреса
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: InteractiveFeedback(
@@ -150,7 +150,7 @@ class CampusDetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              // Header
+              // Заголовок раздела
               if (campus.faculties.isNotEmpty) ...[
                 Padding(
                   padding: const EdgeInsets.symmetric(
@@ -165,7 +165,7 @@ class CampusDetailScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Faculties list
+                // Список факультетов
                 ...campus.faculties.map(
                   (faculty) => _FacultyCard(faculty: faculty),
                 ),

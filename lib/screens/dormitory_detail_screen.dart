@@ -84,7 +84,7 @@ class DormitoryDetailScreen extends StatelessWidget {
           ),
           SliverList(
             delegate: SliverChildListDelegate([
-              // Address Card
+              // Карточка адреса
               Padding(
                 padding: const EdgeInsets.only(
                   left: 16,
@@ -155,7 +155,7 @@ class DormitoryDetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              // Phone Card (if available)
+              // Карточка телефона (если доступен)
               if (dormitory.phone != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(
@@ -297,7 +297,7 @@ class DormitoryDetailScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-              // Description Header
+              // Заголовок описания
               Padding(
                 padding: const EdgeInsets.only(
                   left: 20,
@@ -312,7 +312,7 @@ class DormitoryDetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              // Description Card
+              // Карточка описания
               Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Padding(

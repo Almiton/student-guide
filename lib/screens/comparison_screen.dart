@@ -61,8 +61,8 @@ class ComparisonScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final double screenWidth = MediaQuery.of(context).size.width;
-    // If <= 2 columns, stretch to screen width (accounting for margins/padding).
-    // Else, use 220dp fixed width and scroll horizontally.
+    // Если колонок <= 2, растягиваем на всю ширину экрана (с учетом внешних и внутренних отступов).
+    // Иначе используем фиксированную ширину 220dp и прокручиваем по горизонтали.
     final double columnWidth = scores.length <= 2
         ? (screenWidth - 16) / scores.length
         : 220.0;
@@ -85,7 +85,7 @@ class ComparisonScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Direction Titles (Headers)
+                      // Названия направлений (Заголовки)
                       Padding(
                         padding: const EdgeInsets.only(
                           top: 16,
@@ -170,7 +170,7 @@ class ComparisonScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
 
-                      // Compare Rows: Passing Scores for years 2025 down to 2018
+                      // Строки сравнения: проходные баллы с 2025 по 2018 годы
                       ...[2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018].map((
                         year,
                       ) {
@@ -205,7 +205,7 @@ class ComparisonScreen extends StatelessWidget {
                         );
                       }),
 
-                      // Compare Row: Budget Spots
+                      // Строка сравнения: бюджетные места
                       _buildCompareRow(
                         title: 'БЮДЖЕТНЫЕ МЕСТА',
                         theme: theme,
@@ -238,7 +238,7 @@ class ComparisonScreen extends StatelessWidget {
                         }).toList(),
                       ),
 
-                      // Compare Row: Contract Spots
+                      // Строка сравнения: платные места
                       _buildCompareRow(
                         title: 'ПЛАТНЫЕ МЕСТА',
                         theme: theme,
@@ -261,7 +261,7 @@ class ComparisonScreen extends StatelessWidget {
                         }).toList(),
                       ),
 
-                      // Compare Row: Price
+                      // Строка сравнения: стоимость обучения
                       _buildCompareRow(
                         title: 'СТОИМОСТЬ ОБУЧЕНИЯ',
                         theme: theme,
@@ -284,7 +284,7 @@ class ComparisonScreen extends StatelessWidget {
                         }).toList(),
                       ),
 
-                      // Compare Row: Exam Subjects
+                      // Строка сравнения: предметы ЕГЭ
                       _buildCompareRow(
                         title: 'ПРЕДМЕТЫ ЕГЭ',
                         theme: theme,

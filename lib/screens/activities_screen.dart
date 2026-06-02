@@ -54,7 +54,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen>
   @override
   void initState() {
     super.initState();
-    // Dynamically extract categories from mock activities
+    // Динамически извлекаем категории из мок-активностей
     final Set<String> uniqueCats = mockActivities
         .map((act) => act.category)
         .toSet();
@@ -71,15 +71,15 @@ class _ActivitiesScreenState extends State<ActivitiesScreen>
   Color _getCategoryColor(String category) {
     if (category == 'Все') return const Color(0xFF64748B);
 
-    // Hash the category string to get a stable color
+    // Хешируем строку категории, чтобы получить стабильный цвет
     int hash = 0;
     for (int i = 0; i < category.length; i++) {
       hash = category.codeUnitAt(i) + ((hash << 5) - hash);
     }
 
-    // Generate hue from hash (0 to 360)
+    // Генерируем оттенок (hue) из хеша (от 0 до 360)
     final double hue = (hash.abs() % 360).toDouble();
-    // Use 65% saturation and 60% lightness for a beautiful pastel color
+    // Используем 65% насыщенности и 60% яркости для получения красивого пастельного цвета
     return HSLColor.fromAHSL(1.0, hue, 0.65, 0.60).toColor();
   }
 
@@ -142,7 +142,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen>
 
     return Column(
       children: [
-        // Search bar
+        // Панель поиска
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: TextField(
@@ -195,7 +195,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen>
             style: TextStyle(color: theme.colorScheme.onSurface),
           ),
         ),
-        // Category Selector
+        // Селектор категорий
         SingleChildScrollView(
           controller: _categoryScrollController,
           scrollDirection: Axis.horizontal,
@@ -270,7 +270,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen>
             }).toList(),
           ),
         ),
-        // Activities List
+        // Список активностей
         Expanded(
           child: filteredActivities.isEmpty
               ? Center(

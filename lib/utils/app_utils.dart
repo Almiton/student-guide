@@ -132,43 +132,43 @@ class AppUtils {
   static Color getFacultyColor(String faculty) {
     switch (faculty) {
       case 'ФКН':
-        return const Color(0xFF8B5CF6); // Violet
+        return const Color(0xFF8B5CF6); // Фиолетовый
       case 'ПММ':
-        return const Color(0xFF06B6D4); // Cyan
+        return const Color(0xFF06B6D4); // Голубой
       case 'Экономический':
-        return const Color(0xFF10B981); // Emerald
+        return const Color(0xFF10B981); // Изумрудный
       case 'Юридический':
-        return const Color(0xFFF59E0B); // Amber
+        return const Color(0xFFF59E0B); // Янтарный
       case 'Журналистики':
-        return const Color(0xFFF43F5E); // Rose
+        return const Color(0xFFF43F5E); // Розовый
       case 'РГФ':
-        return const Color(0xFF3B82F6); // Blue
+        return const Color(0xFF3B82F6); // Синий
       case 'Исторический':
-        return const Color(0xFFD97706); // Orange-Brown
+        return const Color(0xFFD97706); // Оранжево-коричневый
       case 'Физический':
-        return const Color(0xFFD946EF); // Fuchsia/Purple
+        return const Color(0xFFD946EF); // Фуксия / Пурпурный
       case 'Химический':
-        return const Color(0xFF14B8A6); // Teal
+        return const Color(0xFF14B8A6); // Бирюзовый
       case 'Математический':
-        return const Color(0xFF6366F1); // Indigo
+        return const Color(0xFF6366F1); // Индиго
       case 'Геологический':
-        return const Color(0xFF78350F); // Brown
+        return const Color(0xFF78350F); // Коричневый
       case 'Медико-биологический':
-        return const Color(0xFF059669); // Emerald-Green
+        return const Color(0xFF059669); // Изумрудно-зеленый
       case 'Фармацевтический':
-        return const Color(0xFF0D9488); // Teal-Green
+        return const Color(0xFF0D9488); // Бирюзово-зеленый
       case 'Филологический':
-        return const Color(0xFFEC4899); // Pink
+        return const Color(0xFFEC4899); // Розовый
       case 'Философии и психологии':
-        return const Color(0xFF8B5CF6); // Purple
+        return const Color(0xFF8B5CF6); // Пурпурный
       case 'Географии и туризма':
-        return const Color(0xFF047857); // Dark Green
+        return const Color(0xFF047857); // Темно-зеленый
       case 'ФМО':
-        return const Color(0xFF0284C7); // Sky Blue
+        return const Color(0xFF0284C7); // Небесно-голубой
       case 'Передовая инженерная школа «Российская электроника, инфокоммуникации и радиосвязь»':
-        return const Color(0xFF0F766E); // Deep Teal
+        return const Color(0xFF0F766E); // Глубокий бирюзовый
       default:
-        return const Color(0xFF64748B); // Slate
+        return const Color(0xFF64748B); // Грифельный / Серый
     }
   }
 

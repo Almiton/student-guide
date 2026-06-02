@@ -35,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen>
   final Key _activitiesKey = const ValueKey('activities');
   final Key _faqKey = const ValueKey('faq');
 
-  // Animation controller and state for the premium cross-fade theme transition
+  // Контроллер анимации и состояние для премиального переключения темы через плавное затухание (cross-fade)
   late final AnimationController _revealController;
   ui.Image? _screenshot;
   bool _animating = false;
@@ -423,7 +423,7 @@ class _HomeScreenState extends State<HomeScreen>
         return;
       }
 
-      // Capture the screenshot of the screen with the current (old) theme
+      // Делаем скриншот экрана с текущей (старой) темой
       final image = await boundary.toImage(
         pixelRatio: MediaQuery.of(context).devicePixelRatio,
       );
@@ -433,13 +433,13 @@ class _HomeScreenState extends State<HomeScreen>
         _animating = true;
       });
 
-      // Switch the app theme instantly
+      // Мгновенно переключаем тему приложения
       widget.onThemeChanged();
 
-      // Animate the fade-out of the old theme screenshot
+      // Запускаем анимацию исчезновения скриншота со старой темой
       _revealController.forward(from: 0.0);
     } catch (e) {
-      // Fallback in case of capture errors
+      // Запасной вариант на случай ошибок захвата скриншота
       widget.onThemeChanged();
     }
   }
@@ -600,10 +600,10 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
 
-    // Wrap Scaffold in a RepaintBoundary to capture it
+    // Оборачиваем Scaffold в RepaintBoundary для возможности сделать скриншот
     content = RepaintBoundary(key: _boundaryKey, child: content);
 
-    // Overlay screenshot of old theme and fade it out
+    // Накладываем скриншот старой темы и плавно его скрываем
     if (_screenshot != null) {
       content = Stack(
         children: [
@@ -723,8 +723,8 @@ class SunMoonPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..isAntiAlias = true;
 
-    // 1. Draw sun rays.
-    // 8 rays, clock-wise starting from top center (angle -pi / 2).
+    // 1. Рисуем солнечные лучи.
+    // 8 лучей, по часовой стрелке, начиная с верхней центральной точки (угол -pi / 2).
     for (int i = 0; i < 8; i++) {
       final double start = i * 0.125;
       final double end = (i + 1) * 0.125;
@@ -758,7 +758,7 @@ class SunMoonPainter extends CustomPainter {
       }
     }
 
-    // 2. Draw center circle with moon cut-out
+    // 2. Рисуем центральный круг с вырезом в форме полумесяца
     final double maskDx = R * (2.0 - 1.35 * progress);
     final double maskDy = -R * (2.0 - 1.75 * progress);
     final Offset maskCenter = Offset(center.dx + maskDx, center.dy + maskDy);

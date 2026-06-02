@@ -29,7 +29,7 @@ class _FAQScreenState extends State<FAQScreen> {
 
     return Column(
       children: [
-        // Search bar
+        // Панель поиска
         Padding(
           padding: const EdgeInsets.all(16),
           child: TextField(
@@ -78,7 +78,7 @@ class _FAQScreenState extends State<FAQScreen> {
             style: TextStyle(color: theme.colorScheme.onSurface),
           ),
         ),
-        // FAQ List
+        // Список часто задаваемых вопросов (FAQ)
         Expanded(
           child: filteredFAQ.isEmpty
               ? Center(

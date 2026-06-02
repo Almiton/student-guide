@@ -76,7 +76,7 @@ class _ScoresScreenState extends State<ScoresScreen>
   final Set<String> _selectedSubjects = {};
   final List<AdmissionScore> _compareList = [];
   String _sortBy =
-      'alphabet'; // 'alphabet', 'scoreAsc', 'scoreDesc', 'priceAsc', 'priceDesc'
+      'alphabet'; // Варианты сортировки: алфавит, баллы по возр./убыв., цена по возр./убыв.
 
   int _extraAchievementsScore = 0;
   late final TextEditingController _achievementsController;
@@ -605,7 +605,7 @@ class _ScoresScreenState extends State<ScoresScreen>
         children: [
           Column(
             children: [
-              // Search Bar, Calculator Toggle & Sorting Popup Row
+              // Строка с поиском, переключателем калькулятора и кнопкой сортировки
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
@@ -668,7 +668,7 @@ class _ScoresScreenState extends State<ScoresScreen>
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Calculator Toggle Button
+                    // Кнопка переключения калькулятора
                     IconButton(
                       style: IconButton.styleFrom(
                         backgroundColor: _showCalculator
@@ -693,7 +693,7 @@ class _ScoresScreenState extends State<ScoresScreen>
                       },
                     ),
                     const SizedBox(width: 8),
-                    // Sorting Button
+                    // Кнопка сортировки
                     IconButton(
                       style: IconButton.styleFrom(
                         backgroundColor: _showSortMenu
@@ -721,7 +721,7 @@ class _ScoresScreenState extends State<ScoresScreen>
                 ),
               ),
 
-              // Collapsible Calculator Panel with Sliders
+              // Раскрывающаяся панель калькулятора со слайдерами
               if (_showCalculator)
                 GestureDetector(
                   onTap: () {
@@ -917,7 +917,7 @@ class _ScoresScreenState extends State<ScoresScreen>
                   ),
                 ),
 
-              // Faculty Selector
+              // Селектор факультетов
               SingleChildScrollView(
                 controller: _facultyScrollController,
                 scrollDirection: Axis.horizontal,
@@ -1036,7 +1036,7 @@ class _ScoresScreenState extends State<ScoresScreen>
                 ),
               ),
 
-              // Scores List
+              // Список направлений и проходных баллов
               Expanded(
                 child: filteredScores.isEmpty
                     ? Center(
@@ -1113,7 +1113,7 @@ class _ScoresScreenState extends State<ScoresScreen>
             ],
           ),
 
-          // Custom Sort Dropdown Menu
+          // Кастомное выпадающее меню сортировки
           if (_showSortMenu)
             Positioned(
               top: 64, // Сразу под строкой поиска
@@ -1177,7 +1177,7 @@ class _ScoresScreenState extends State<ScoresScreen>
               ),
             ),
 
-          // Floating Comparison Bottom Panel
+          // Плавающая нижняя панель сравнения
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutCubic,
@@ -1368,12 +1368,12 @@ class _YearRouletteState extends State<YearRoulette> {
     _yearsList = widget.passingScores.entries.toList()
       ..sort((a, b) => a.key.compareTo(b.key));
 
-    // Add 2026 with 0 (dash) if not already present
+    // Добавляем 2026 год с 0 (прочерк), если он еще не присутствует
     if (_yearsList.isEmpty || _yearsList.last.key < 2026) {
       _yearsList.add(const MapEntry(2026, 0));
     }
 
-    // Center on 2025 (second to last), not the very last
+    // Центрируем на 2025 году (предпоследний), а не на самом последнем
     final idx2025 = _yearsList.indexWhere((e) => e.key == 2025);
     final initialPage = idx2025 >= 0
         ? idx2025
@@ -1935,11 +1935,11 @@ class _AdmissionScoreCardState extends State<AdmissionScoreCard> {
       final prevVal = activeYears[activeYears.length - 2].value;
       if (lastVal > prevVal) {
         trendIcon = Icons.trending_up;
-        trendColor = const Color(0xFFEF4444); // Вырос -> Red
+        trendColor = const Color(0xFFEF4444); // Вырос -> Красный
         trendText = 'Вырос';
       } else if (lastVal < prevVal) {
         trendIcon = Icons.trending_down;
-        trendColor = const Color(0xFF10B981); // Упал -> Green
+        trendColor = const Color(0xFF10B981); // Упал -> Зеленый
         trendText = 'Упал';
       }
     }
@@ -2069,7 +2069,7 @@ class _AdmissionScoreCardState extends State<AdmissionScoreCard> {
             ),
           ),
 
-          // Selector of Form of Education
+          // Выбор формы обучения
           (() {
             final Set<String> availableForms = {};
             if (score.prices != null) availableForms.addAll(score.prices!.keys);

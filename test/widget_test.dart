@@ -3,16 +3,16 @@ import 'package:student_guide/main.dart';
 
 void main() {
   testWidgets('Student Guide App smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+    // Строим наше приложение и триггерим кадр.
     await tester.pumpWidget(const StudentGuideApp());
 
-    // Move virtual time forward to trigger Timer in SplashScreen (600ms)
-    // and let the PageRoute transition finish (300ms).
+    // Перематываем виртуальное время вперед для срабатывания таймера в SplashScreen (600 мс)
+    // и завершения анимации перехода PageRoute (300 мс).
     await tester.pump(const Duration(milliseconds: 1000));
-    // Pump another frame to build the HomeScreen widgets
+    // Перерисовываем кадр для построения виджетов HomeScreen
     await tester.pump();
 
-    // Verify that the App Bar starts with the first tab title.
+    // Проверяем, что App Bar открывается с заголовком первой вкладки.
     expect(find.text('Корпуса и Кафедры'), findsOneWidget);
   });
 }
