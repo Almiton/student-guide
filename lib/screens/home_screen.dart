@@ -469,9 +469,7 @@ class _HomeScreenState extends State<HomeScreen>
           leading: IconButton(
             icon: Icon(
               Icons.info_rounded,
-              color: isDark
-                  ? const Color(0xFFC084FC)
-                  : const Color(0xFF8B5CF6),
+              color: isDark ? const Color(0xFFC084FC) : const Color(0xFF8B5CF6),
               size: 22,
             ),
             onPressed: () => _showAboutAppDialog(context),
@@ -481,13 +479,13 @@ class _HomeScreenState extends State<HomeScreen>
             reverseDuration: const Duration(milliseconds: 200),
             transitionBuilder: (Widget child, Animation<double> animation) {
               // Одинаковый fade + лёгкий сдвиг снизу для всех вкладок
-              final slide = Tween<Offset>(
-                begin: const Offset(0, 0.15),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOut,
-              ));
+              final slide =
+                  Tween<Offset>(
+                    begin: const Offset(0, 0.15),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                  );
               return FadeTransition(
                 opacity: animation,
                 child: SlideTransition(position: slide, child: child),
@@ -497,10 +495,7 @@ class _HomeScreenState extends State<HomeScreen>
               key: ValueKey<int>(_currentIndex),
               fit: BoxFit.scaleDown,
               alignment: Alignment.center,
-              child: Text(
-                _titles[_currentIndex],
-                maxLines: 1,
-              ),
+              child: Text(_titles[_currentIndex], maxLines: 1),
             ),
           ),
           actions: [

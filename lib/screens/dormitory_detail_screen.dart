@@ -7,7 +7,6 @@ class DormitoryDetailScreen extends StatelessWidget {
 
   const DormitoryDetailScreen({super.key, required this.dormitory});
 
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -98,9 +97,13 @@ class DormitoryDetailScreen extends StatelessWidget {
                   child: Card(
                     margin: EdgeInsets.zero,
                     child: InkWell(
-                      onTap: () => AppUtils.openMapRoute(context, dormitory.address),
-                      onLongPress: () =>
-                          AppUtils.copyToClipboard(context, dormitory.address, 'Адрес'),
+                      onTap: () =>
+                          AppUtils.openMapRoute(context, dormitory.address),
+                      onLongPress: () => AppUtils.copyToClipboard(
+                        context,
+                        dormitory.address,
+                        'Адрес',
+                      ),
                       borderRadius: BorderRadius.circular(16),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -168,9 +171,13 @@ class DormitoryDetailScreen extends StatelessWidget {
                     child: Card(
                       margin: EdgeInsets.zero,
                       child: InkWell(
-                        onTap: () => AppUtils.openDialer(context, dormitory.phone!),
-                        onLongPress: () =>
-                            AppUtils.copyToClipboard(context, dormitory.phone!, 'Телефон'),
+                        onTap: () =>
+                            AppUtils.openDialer(context, dormitory.phone!),
+                        onLongPress: () => AppUtils.copyToClipboard(
+                          context,
+                          dormitory.phone!,
+                          'Телефон',
+                        ),
                         borderRadius: BorderRadius.circular(16),
                         child: Padding(
                           padding: const EdgeInsets.all(16),
@@ -196,25 +203,26 @@ class DormitoryDetailScreen extends StatelessWidget {
                                   children: [
                                     Text(
                                       'Контакты администрации',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.primary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: theme.colorScheme.primary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       dormitory.phone!,
-                                      style: theme.textTheme.bodyMedium?.copyWith(
-                                        fontWeight: FontWeight.w500,
-                                        color: theme.colorScheme.primary,
-                                      ),
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w500,
+                                            color: theme.colorScheme.primary,
+                                          ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
                                       'Нажмите, чтобы позвонить • Удерживайте для копирования',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        fontSize: 10,
-                                      ),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(fontSize: 10),
                                     ),
                                   ],
                                 ),
@@ -268,24 +276,25 @@ class DormitoryDetailScreen extends StatelessWidget {
                                   children: [
                                     Text(
                                       'Заведующая общежитием',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.secondary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: theme.colorScheme.secondary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       dormitory.manager!,
-                                      style: theme.textTheme.bodyMedium?.copyWith(
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
                                       'Удерживайте для копирования',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        fontSize: 10,
-                                      ),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(fontSize: 10),
                                     ),
                                   ],
                                 ),

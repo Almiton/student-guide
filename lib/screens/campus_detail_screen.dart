@@ -7,7 +7,6 @@ class CampusDetailScreen extends StatelessWidget {
 
   const CampusDetailScreen({super.key, required this.campus});
 
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -93,9 +92,13 @@ class CampusDetailScreen extends StatelessWidget {
                   child: Card(
                     margin: EdgeInsets.zero,
                     child: InkWell(
-                      onTap: () => AppUtils.openMapRoute(context, campus.address),
-                      onLongPress: () =>
-                          AppUtils.copyToClipboard(context, campus.address, 'Адрес'),
+                      onTap: () =>
+                          AppUtils.openMapRoute(context, campus.address),
+                      onLongPress: () => AppUtils.copyToClipboard(
+                        context,
+                        campus.address,
+                        'Адрес',
+                      ),
                       borderRadius: BorderRadius.circular(16),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -170,7 +173,8 @@ class CampusDetailScreen extends StatelessWidget {
                   (faculty) => _FacultyCard(faculty: faculty),
                 ),
               ],
-              if (campus.structures != null && campus.structures!.isNotEmpty) ...[
+              if (campus.structures != null &&
+                  campus.structures!.isNotEmpty) ...[
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
@@ -248,7 +252,8 @@ class CampusDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
               ],
-              if (campus.extraContacts != null && campus.extraContacts!.isNotEmpty) ...[
+              if (campus.extraContacts != null &&
+                  campus.extraContacts!.isNotEmpty) ...[
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
@@ -264,7 +269,10 @@ class CampusDetailScreen extends StatelessWidget {
                 ),
                 ...campus.extraContacts!.entries.map(
                   (entry) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     child: _DetailContactListItem(
                       name: entry.key,
                       value: entry.value,
@@ -433,7 +441,11 @@ class _DetailInfoListItem extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 5.0),
-            child: Icon(icon, size: iconSize, color: theme.colorScheme.secondary),
+            child: Icon(
+              icon,
+              size: iconSize,
+              color: theme.colorScheme.secondary,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -485,8 +497,8 @@ class _DetailContactListItem extends StatelessWidget {
                   value.contains('@')
                       ? Icons.email_outlined
                       : value.contains('http') || value.contains('.ru')
-                          ? Icons.language_outlined
-                          : Icons.phone_in_talk_outlined,
+                      ? Icons.language_outlined
+                      : Icons.phone_in_talk_outlined,
                   color: theme.colorScheme.primary,
                   size: 20,
                 ),

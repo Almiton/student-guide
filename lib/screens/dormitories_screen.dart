@@ -35,7 +35,7 @@ class _DormitoriesScreenState extends State<DormitoriesScreen>
     'Философии и психологии',
     'Географии и туризма',
     'ФМО',
-    'Передовая инженерная школа «Российская электроника, инфокоммуникации и радиосвязь»'
+    'Передовая инженерная школа «Российская электроника, инфокоммуникации и радиосвязь»',
   ];
 
   @override
@@ -61,16 +61,20 @@ class _DormitoriesScreenState extends State<DormitoriesScreen>
           dormitory.name.toLowerCase().contains(query) ||
           dormitory.address.toLowerCase().contains(query) ||
           dormitory.description.toLowerCase().contains(query) ||
-          (dormitory.phone != null && dormitory.phone!.toLowerCase().contains(query)) ||
-          (dormitory.manager != null && dormitory.manager!.toLowerCase().contains(query));
+          (dormitory.phone != null &&
+              dormitory.phone!.toLowerCase().contains(query)) ||
+          (dormitory.manager != null &&
+              dormitory.manager!.toLowerCase().contains(query));
 
       if (matchesBasicInfo) return true;
 
       // 2. Поиск по ценам и формам обучения
       if (dormitory.prices != null) {
-        final matchesPrices = dormitory.prices!.entries.any((entry) =>
-            entry.key.toLowerCase().contains(query) ||
-            entry.value.toLowerCase().contains(query));
+        final matchesPrices = dormitory.prices!.entries.any(
+          (entry) =>
+              entry.key.toLowerCase().contains(query) ||
+              entry.value.toLowerCase().contains(query),
+        );
         if (matchesPrices) return true;
       }
 
@@ -93,8 +97,11 @@ class _DormitoriesScreenState extends State<DormitoriesScreen>
           // Особая обработка "Все факультеты" для исключения ложных срабатываний
           if (key.toLowerCase().contains('все факультеты')) {
             // Проверяем, совпадает ли поисковый запрос с каким-либо из реальных факультетов
-            final isSearchingRealFaculty = _realFaculties.any((fac) =>
-                AppUtils.matchFaculty(fac, query) || fac.toLowerCase().contains(query));
+            final isSearchingRealFaculty = _realFaculties.any(
+              (fac) =>
+                  AppUtils.matchFaculty(fac, query) ||
+                  fac.toLowerCase().contains(query),
+            );
             if (isSearchingRealFaculty) {
               return true;
             }
@@ -669,7 +676,8 @@ class _DormitoryFacultyRowState extends State<_DormitoryFacultyRow> {
       decoration: BoxDecoration(
         color: _isHighlighted
             ? facColor.withOpacity(0.15)
-            : Colors.transparent, // Полностью прозрачный фон убирает темный прямоугольник
+            : Colors
+                  .transparent, // Полностью прозрачный фон убирает темный прямоугольник
         borderRadius: BorderRadius.circular(10),
         // Граница полностью убрана во всех состояниях для идеальной визуальной чистоты
         boxShadow: _isHighlighted
@@ -709,7 +717,9 @@ class _DormitoryFacultyRowState extends State<_DormitoryFacultyRow> {
               child: Text(
                 AppUtils.getPluralSpots(widget.spots),
                 style: TextStyle(
-                  color: _isHighlighted ? facColor : theme.colorScheme.secondary,
+                  color: _isHighlighted
+                      ? facColor
+                      : theme.colorScheme.secondary,
                   fontSize: 11.5,
                   fontWeight: FontWeight.bold,
                 ),

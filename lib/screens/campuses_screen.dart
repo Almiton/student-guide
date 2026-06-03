@@ -34,23 +34,28 @@ class _CampusesScreenState extends State<CampusesScreen>
       final query = _searchQuery.toLowerCase().trim();
 
       // Проверка корпуса по названию, адресу и доп.инфо
-      final matchesCampus = campus.name.toLowerCase().contains(query) ||
+      final matchesCampus =
+          campus.name.toLowerCase().contains(query) ||
           campus.address.toLowerCase().contains(query) ||
           (campus.extraInfo != null &&
-              campus.extraInfo!.any((info) => info.toLowerCase().contains(query)));
+              campus.extraInfo!.any(
+                (info) => info.toLowerCase().contains(query),
+              ));
 
       if (matchesCampus) return true;
 
       // Проверка факультетов и их кафедр (с поддержкой поиска по сокращениям)
       final matchesFacultyOrDept = campus.faculties.any((faculty) {
-        final matchesFaculty = faculty.name.toLowerCase().contains(query) ||
+        final matchesFaculty =
+            faculty.name.toLowerCase().contains(query) ||
             faculty.description.toLowerCase().contains(query) ||
             AppUtils.matchFaculty(faculty.name, query);
         if (matchesFaculty) return true;
 
         final matchesDept = faculty.departments.any((dept) {
           return dept.name.toLowerCase().contains(query) ||
-              (dept.description != null && dept.description!.toLowerCase().contains(query)) ||
+              (dept.description != null &&
+                  dept.description!.toLowerCase().contains(query)) ||
               (dept.head != null && dept.head!.toLowerCase().contains(query)) ||
               AppUtils.matchDepartment(dept.name, query);
         });
@@ -60,20 +65,27 @@ class _CampusesScreenState extends State<CampusesScreen>
       if (matchesFacultyOrDept) return true;
 
       // Проверка общеуниверситетских структур
-      final matchesStructure = campus.structures != null &&
-          campus.structures!.any((struct) => struct.toLowerCase().contains(query));
+      final matchesStructure =
+          campus.structures != null &&
+          campus.structures!.any(
+            (struct) => struct.toLowerCase().contains(query),
+          );
       if (matchesStructure) return true;
 
       // Проверка музеев
-      final matchesMuseum = campus.museums != null &&
+      final matchesMuseum =
+          campus.museums != null &&
           campus.museums!.any((mus) => mus.toLowerCase().contains(query));
       if (matchesMuseum) return true;
 
       // Проверка контактов
-      final matchesContact = campus.extraContacts != null &&
-          campus.extraContacts!.entries.any((entry) =>
-              entry.key.toLowerCase().contains(query) ||
-              entry.value.toLowerCase().contains(query));
+      final matchesContact =
+          campus.extraContacts != null &&
+          campus.extraContacts!.entries.any(
+            (entry) =>
+                entry.key.toLowerCase().contains(query) ||
+                entry.value.toLowerCase().contains(query),
+          );
       if (matchesContact) return true;
 
       return false;
@@ -92,9 +104,7 @@ class _CampusesScreenState extends State<CampusesScreen>
             },
             decoration: InputDecoration(
               hintText: 'Поиск корпуса, факультета, кафедры...',
-              hintStyle: TextStyle(
-                color: theme.textTheme.bodySmall?.color,
-              ),
+              hintStyle: TextStyle(color: theme.textTheme.bodySmall?.color),
               prefixIcon: Icon(
                 Icons.search,
                 color: theme.textTheme.bodySmall?.color,
@@ -196,7 +206,8 @@ class _CampusCardState extends State<_CampusCard> {
   @override
   void didUpdateWidget(_CampusCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.searchQuery != widget.searchQuery || oldWidget.campus != widget.campus) {
+    if (oldWidget.searchQuery != widget.searchQuery ||
+        oldWidget.campus != widget.campus) {
       _initExpandedState();
     }
   }
@@ -204,33 +215,64 @@ class _CampusCardState extends State<_CampusCard> {
   void _initExpandedState() {
     final query = widget.searchQuery.toLowerCase().trim();
 
-    final bool hasFacultyMatch = query.isNotEmpty && widget.campus.faculties.any((faculty) =>
-        faculty.name.toLowerCase().contains(query) ||
-        faculty.description.toLowerCase().contains(query) ||
-        AppUtils.matchFaculty(faculty.name, query));
+    final bool hasFacultyMatch =
+        query.isNotEmpty &&
+        widget.campus.faculties.any(
+          (faculty) =>
+              faculty.name.toLowerCase().contains(query) ||
+              faculty.description.toLowerCase().contains(query) ||
+              AppUtils.matchFaculty(faculty.name, query),
+        );
 
-    final bool hasDeptMatch = query.isNotEmpty && widget.campus.faculties.any((faculty) =>
-        faculty.departments.any((dept) =>
-            dept.name.toLowerCase().contains(query) ||
-            (dept.description != null && dept.description!.toLowerCase().contains(query)) ||
-            (dept.head != null && dept.head!.toLowerCase().contains(query)) ||
-            AppUtils.matchDepartment(dept.name, query)));
+    final bool hasDeptMatch =
+        query.isNotEmpty &&
+        widget.campus.faculties.any(
+          (faculty) => faculty.departments.any(
+            (dept) =>
+                dept.name.toLowerCase().contains(query) ||
+                (dept.description != null &&
+                    dept.description!.toLowerCase().contains(query)) ||
+                (dept.head != null &&
+                    dept.head!.toLowerCase().contains(query)) ||
+                AppUtils.matchDepartment(dept.name, query),
+          ),
+        );
 
-    final bool hasStructureMatch = query.isNotEmpty && widget.campus.structures != null &&
-        widget.campus.structures!.any((struct) => struct.toLowerCase().contains(query));
+    final bool hasStructureMatch =
+        query.isNotEmpty &&
+        widget.campus.structures != null &&
+        widget.campus.structures!.any(
+          (struct) => struct.toLowerCase().contains(query),
+        );
 
-    final bool hasMuseumMatch = query.isNotEmpty && widget.campus.museums != null &&
+    final bool hasMuseumMatch =
+        query.isNotEmpty &&
+        widget.campus.museums != null &&
         widget.campus.museums!.any((mus) => mus.toLowerCase().contains(query));
 
-    final bool hasInfoMatch = query.isNotEmpty && widget.campus.extraInfo != null &&
-        widget.campus.extraInfo!.any((info) => info.toLowerCase().contains(query));
+    final bool hasInfoMatch =
+        query.isNotEmpty &&
+        widget.campus.extraInfo != null &&
+        widget.campus.extraInfo!.any(
+          (info) => info.toLowerCase().contains(query),
+        );
 
-    final bool hasContactMatch = query.isNotEmpty && widget.campus.extraContacts != null &&
-        widget.campus.extraContacts!.entries.any((entry) =>
-            entry.key.toLowerCase().contains(query) ||
-            entry.value.toLowerCase().contains(query));
+    final bool hasContactMatch =
+        query.isNotEmpty &&
+        widget.campus.extraContacts != null &&
+        widget.campus.extraContacts!.entries.any(
+          (entry) =>
+              entry.key.toLowerCase().contains(query) ||
+              entry.value.toLowerCase().contains(query),
+        );
 
-    _isExpanded = hasFacultyMatch || hasDeptMatch || hasStructureMatch || hasMuseumMatch || hasInfoMatch || hasContactMatch;
+    _isExpanded =
+        hasFacultyMatch ||
+        hasDeptMatch ||
+        hasStructureMatch ||
+        hasMuseumMatch ||
+        hasInfoMatch ||
+        hasContactMatch;
   }
 
   @override
@@ -292,11 +334,19 @@ class _CampusCardState extends State<_CampusCard> {
                     borderRadius: BorderRadius.circular(8),
                     activeBorderColor: theme.colorScheme.secondary,
                     child: InkWell(
-                      onTap: () => AppUtils.openMapRoute(context, campus.address),
-                      onLongPress: () => AppUtils.copyToClipboard(context, campus.address, 'Адрес'),
+                      onTap: () =>
+                          AppUtils.openMapRoute(context, campus.address),
+                      onLongPress: () => AppUtils.copyToClipboard(
+                        context,
+                        campus.address,
+                        'Адрес',
+                      ),
                       borderRadius: BorderRadius.circular(8),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 0),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 2,
+                          horizontal: 0,
+                        ),
                         child: Row(
                           children: [
                             Icon(
@@ -351,11 +401,13 @@ class _CampusCardState extends State<_CampusCard> {
               ),
             ),
             const SizedBox(height: 8),
-            ...campus.faculties.map((faculty) => _FacultyTile(
-                  key: ValueKey('${faculty.name}_tile_widget'),
-                  faculty: faculty,
-                  searchQuery: searchQuery,
-                )),
+            ...campus.faculties.map(
+              (faculty) => _FacultyTile(
+                key: ValueKey('${faculty.name}_tile_widget'),
+                faculty: faculty,
+                searchQuery: searchQuery,
+              ),
+            ),
           ],
           if (campus.structures != null && campus.structures!.isNotEmpty) ...[
             if (campus.faculties.isNotEmpty) const Divider(height: 24),
@@ -377,10 +429,7 @@ class _CampusCardState extends State<_CampusCard> {
             if (campus.faculties.isNotEmpty ||
                 (campus.structures != null && campus.structures!.isNotEmpty))
               const Divider(height: 24),
-            const _SectionTitle(
-              title: 'Музеи',
-              icon: Icons.museum_outlined,
-            ),
+            const _SectionTitle(title: 'Музеи', icon: Icons.museum_outlined),
             const SizedBox(height: 6),
             ...campus.museums!.map(
               (museum) => _InfoListItem(
@@ -396,10 +445,7 @@ class _CampusCardState extends State<_CampusCard> {
                 (campus.structures != null && campus.structures!.isNotEmpty) ||
                 (campus.museums != null && campus.museums!.isNotEmpty))
               const Divider(height: 24),
-            const _SectionTitle(
-              title: 'Информация',
-              icon: Icons.info_outline,
-            ),
+            const _SectionTitle(title: 'Информация', icon: Icons.info_outline),
             const SizedBox(height: 6),
             ...campus.extraInfo!.map(
               (info) => _InfoListItem(
@@ -410,7 +456,8 @@ class _CampusCardState extends State<_CampusCard> {
               ),
             ),
           ],
-          if (campus.extraContacts != null && campus.extraContacts!.isNotEmpty) ...[
+          if (campus.extraContacts != null &&
+              campus.extraContacts!.isNotEmpty) ...[
             if (campus.faculties.isNotEmpty ||
                 (campus.structures != null && campus.structures!.isNotEmpty) ||
                 (campus.museums != null && campus.museums!.isNotEmpty) ||
@@ -500,11 +547,16 @@ class _FacultyTileState extends State<_FacultyTile> {
     final query = widget.searchQuery.toLowerCase().trim();
 
     // Проверяем совпадение по кафедрам для авто-развертывания факультета
-    final bool shouldExpand = query.isNotEmpty && widget.faculty.departments.any((dept) =>
-        dept.name.toLowerCase().contains(query) ||
-        (dept.description != null && dept.description!.toLowerCase().contains(query)) ||
-        (dept.head != null && dept.head!.toLowerCase().contains(query)) ||
-        AppUtils.matchDepartment(dept.name, query));
+    final bool shouldExpand =
+        query.isNotEmpty &&
+        widget.faculty.departments.any(
+          (dept) =>
+              dept.name.toLowerCase().contains(query) ||
+              (dept.description != null &&
+                  dept.description!.toLowerCase().contains(query)) ||
+              (dept.head != null && dept.head!.toLowerCase().contains(query)) ||
+              AppUtils.matchDepartment(dept.name, query),
+        );
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -516,7 +568,7 @@ class _FacultyTileState extends State<_FacultyTile> {
                   color: theme.colorScheme.primary.withValues(alpha: 0.35),
                   blurRadius: 8,
                   spreadRadius: 2,
-                )
+                ),
               ]
             : [],
       ),
@@ -548,13 +600,17 @@ class _FacultyTileState extends State<_FacultyTile> {
               ),
             ),
             iconColor: theme.colorScheme.secondary,
-            collapsedIconColor: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+            collapsedIconColor: theme.textTheme.bodyMedium?.color?.withValues(
+              alpha: 0.6,
+            ),
             childrenPadding: const EdgeInsets.all(12),
             children: [
               Text(
                 widget.faculty.description,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                  color: theme.textTheme.bodyMedium?.color?.withValues(
+                    alpha: 0.8,
+                  ),
                   height: 1.4,
                 ),
               ),
@@ -591,10 +647,7 @@ class _DepartmentItem extends StatefulWidget {
   final Department department;
   final String searchQuery;
 
-  const _DepartmentItem({
-    required this.department,
-    required this.searchQuery,
-  });
+  const _DepartmentItem({required this.department, required this.searchQuery});
 
   @override
   State<_DepartmentItem> createState() => _DepartmentItemState();
@@ -836,7 +889,11 @@ class _InfoListItemState extends State<_InfoListItem> {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 5.0),
-            child: Icon(widget.icon, size: widget.iconSize, color: theme.colorScheme.secondary),
+            child: Icon(
+              widget.icon,
+              size: widget.iconSize,
+              color: theme.colorScheme.secondary,
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -919,7 +976,8 @@ class _ContactListItemState extends State<_ContactListItem> {
         activeBorderColor: theme.colorScheme.primary,
         child: InkWell(
           onTap: () => AppUtils.openContact(context, widget.value),
-          onLongPress: () => AppUtils.copyToClipboard(context, widget.value, widget.name),
+          onLongPress: () =>
+              AppUtils.copyToClipboard(context, widget.value, widget.name),
           borderRadius: BorderRadius.circular(10),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
@@ -936,10 +994,12 @@ class _ContactListItemState extends State<_ContactListItem> {
               boxShadow: _isHighlighted
                   ? [
                       BoxShadow(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.25),
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.25,
+                        ),
                         blurRadius: 6,
                         spreadRadius: 1,
-                      )
+                      ),
                     ]
                   : [],
             ),
@@ -948,10 +1008,13 @@ class _ContactListItemState extends State<_ContactListItem> {
                 Icon(
                   widget.value.contains('@')
                       ? Icons.email_outlined
-                      : widget.value.contains('http') || widget.value.contains('.ru')
-                          ? Icons.language_outlined
-                          : Icons.phone_in_talk_outlined,
-                  color: _isHighlighted ? theme.colorScheme.primary : theme.colorScheme.primary,
+                      : widget.value.contains('http') ||
+                            widget.value.contains('.ru')
+                      ? Icons.language_outlined
+                      : Icons.phone_in_talk_outlined,
+                  color: _isHighlighted
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.primary,
                   size: 20,
                 ),
                 const SizedBox(width: 12),
